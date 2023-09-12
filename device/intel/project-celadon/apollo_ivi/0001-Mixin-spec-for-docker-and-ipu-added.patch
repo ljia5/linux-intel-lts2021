@@ -1,0 +1,23 @@
+From 1792c27e86511877dec90a5f0b61008072855cf4 Mon Sep 17 00:00:00 2001
+From: swaroopb <swaroop.balan@intel.com>
+Date: Tue, 12 Sep 2023 17:42:19 +0530
+Subject: [PATCH] Mixin spec for docker and ipu added
+
+Change-Id: I00187c6c9f69ab07a64712e86a2b08fc07a38ed8
+---
+ mixins.spec | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/mixins.spec b/mixins.spec
+index d1836f1..795b239 100755
+--- a/mixins.spec
++++ b/mixins.spec
+@@ -89,3 +89,5 @@ bugreport: true
+ mainline-mod: true
+ houdini: true
+ neuralnetworks: true
++docker: true
++ipu: true
+-- 
+2.40.1
+
