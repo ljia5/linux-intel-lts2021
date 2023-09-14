@@ -1,0 +1,275 @@
+From 7655e748ea95943911daf06dcd071a60ccf374c2 Mon Sep 17 00:00:00 2001
+From: celadon <celadon@intel.com>
+Date: Wed, 6 Sep 2023 13:21:43 +0000
+Subject: [PATCH] Enable 32bit instead of 24bit in Audio HAL
+
+As the driver supports with 32bit container,changing the HAL accordingly.
+The debug logs and flag enabled
+
+Tracked-On: OAM-112117
+Signed-off-by: Deepa K G g.k.deepa@intel.com
+---
+ .../policy/audio_policy_configuration.xml     | 60 +++++++++----------
+ groups/audio/AudioCustom/init.rc              |  2 +-
+ .../linux-intel-lts2021/debug_diffconfig      |  3 +-
+ 3 files changed, 33 insertions(+), 32 deletions(-)
+
+diff --git a/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml b/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
+index 620be98..f4ed2e3 100755
+--- a/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
++++ b/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
+@@ -74,72 +74,72 @@
+             <mixPorts>
+                 <mixPort name="mixport_bus0_media_out" role="source"
+                          flags="AUDIO_OUTPUT_FLAG_PRIMARY">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus1_navigation_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus2_voice_command_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus3_call_ring_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus4_call_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus5_alarm_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus6_notification_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus7_system_sound_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus100_audio_zone_1" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_bus200_audio_zone_2" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                 </mixPort>
+                 <mixPort name="primary input" role="sink">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
+                              channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_FRONT_BACK,AUDIO_CHANNEL_IN_2POINT0POINT2"/>
+                 </mixPort>
+                 <mixPort name="mixport_tuner0" role="sink">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_input_bus_tone_zone_0" role="sink">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                 </mixPort>
+                 <mixPort name="mixport_input_bus_tone_zone_1" role="sink">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                 </mixPort>
+@@ -147,7 +147,7 @@
+             <devicePorts>
+                 <devicePort tagName="bus0_media_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus0_media_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -157,7 +157,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus1_navigation_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                         address="bus1_navigation_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -167,7 +167,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus2_voice_command_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus2_voice_command_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -177,7 +177,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus3_call_ring_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus3_call_ring_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -187,7 +187,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus4_call_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus4_call_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -197,7 +197,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus5_alarm_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus5_alarm_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -207,7 +207,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus6_notification_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus6_notification_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -217,7 +217,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus7_system_sound_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus7_system_sound_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -227,7 +227,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus100_audio_zone_1" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus100_audio_zone_1">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -237,7 +237,7 @@
+                 </devicePort>
+                 <devicePort tagName="bus200_audio_zone_2" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus200_audio_zone_2">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -247,25 +247,25 @@
+                 </devicePort>
+                 <devicePort tagName="Built-In Mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source"
+                     address="Built-In Mic" >
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
+                              channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_FRONT_BACK, AUDIO_CHANNEL_IN_2POINT0POINT2"/>
+                 </devicePort>
+                 <devicePort tagName="Built-In Back Mic" type="AUDIO_DEVICE_IN_BACK_MIC"
+                             role="source" address="Built-In Back Mic">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
+                              channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_FRONT_BACK,AUDIO_CHANNEL_IN_2POINT0POINT2"/>
+ 	        </devicePort>
+                 <devicePort tagName="Echo-Reference Mic" type="AUDIO_DEVICE_IN_ECHO_REFERENCE" role="source"
+                             address="Echo-Reference Mic">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
+                              channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_FRONT_BACK"/>
+                 </devicePort>
+                 <devicePort tagName="FM Tuner" type="AUDIO_DEVICE_IN_FM_TUNER" role="source"
+                             address="tuner0">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -274,7 +274,7 @@
+                 </devicePort>
+                 <devicePort tagName="Tone Generator 0" type="AUDIO_DEVICE_IN_BUS" role="source"
+                             address="input_bus_tone_zone_0">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+@@ -284,7 +284,7 @@
+                 </devicePort>
+                 <devicePort tagName="Tone Generator 1" type="AUDIO_DEVICE_IN_BUS" role="source"
+                             address="input_bus_tone_zone_1">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_24_BIT_PACKED"
++                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                     <gains>
+                         <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+diff --git a/groups/audio/AudioCustom/init.rc b/groups/audio/AudioCustom/init.rc
+index 8a90dfb..ab1df01 100644
+--- a/groups/audio/AudioCustom/init.rc
++++ b/groups/audio/AudioCustom/init.rc
+@@ -99,7 +99,7 @@ on early-boot
+     insmod /vendor/lib/modules/snd-hda-ext-core.ko
+     insmod /vendor/lib/modules/snd-soc-hda-codec.ko
+     insmod /vendor/lib/modules/snd-soc-avs-hdaudio.ko
+-    insmod /vendor/lib/modules/snd-soc-avs.ko ignore_fw_version=1
++    insmod /vendor/lib/modules/snd-soc-avs.ko dyndbg==pmf i2s_test=1 ignore_fw_version=1
+     insmod /vendor/lib/modules/snd-soc-avs-probe.ko
+     insmod /vendor/lib/modules/snd-soc-hdac-hda.ko
+     insmod /vendor/lib/modules/snd-soc-hdac-hdmi.ko
+diff --git a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/debug_diffconfig b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/debug_diffconfig
+index e00e070..d9aa987 100644
+--- a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/debug_diffconfig
++++ b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/debug_diffconfig
+@@ -71,7 +71,8 @@ CONFIG_DYNAMIC_FTRACE_WITH_REGS=y
+ CONFIG_DYNAMIC_FTRACE=y
+ CONFIG_TRACING_EVENTS_GPIO=y
+ CONFIG_FTRACE_MCOUNT_RECORD=y
+-
++CONFIG_DYNAMIC_DEBUG=y
++CONFIG_DYNAMIC_DEBUG_CORE=y
+ CONFIG_INTEL_SOCPERF=y
+ CONFIG_SOCPERF=m
+ CONFIG_INTEL_SOCWATCH=m
+-- 
+2.39.2
+

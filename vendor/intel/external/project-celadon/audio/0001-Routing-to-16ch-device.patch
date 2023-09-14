@@ -1,0 +1,357 @@
+From 6d738fba7425bf126eec42e03a8bf74bb4fba5f6 Mon Sep 17 00:00:00 2001
+From: celadon <celadon@intel.com>
+Date: Wed, 6 Sep 2023 13:37:25 +0000
+Subject: [PATCH] Routing to 16ch device
+
+Routing HAL to 16ch device
+configuring to 32bit format
+support for playback 16ch->12ch and capture 16ch->2ch
+
+Tracked-On: OAM-112117
+Signed-off-by: Deepa K G g.k.deepa@intel.com
+---
+ primary/audio_hw.c | 133 +++++++++++++++++++++++++++++----------------
+ 1 file changed, 85 insertions(+), 48 deletions(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index e1544de..49d07b1 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -16,15 +16,6 @@
+ 
+ #define LOG_TAG "audio_hw_primary"
+ //#define LOG_NDEBUG 0
+-
+-#include <dirent.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <pthread.h>
+-#include <stdint.h>
+-#include <stdlib.h>
+-#include <sys/time.h>
+-#include <unistd.h>
+ #include <math.h>
+ #include <log/log.h>
+ #include <cutils/properties.h>
+@@ -63,7 +54,8 @@
+ #define OUT_PERIOD_SIZE 1024
+ #define OUT_PERIOD_COUNT 4
+ #define OUT_SAMPLING_RATE 48000
+-#define OUT_CHANNELS 16
++#define MAX_OUT_CHANNELS 16
++#define MAX_IN_CHANNELS 16
+ #define BT_HFP_DATA_CH 13
+ 
+ #define IN_PERIOD_SIZE 960 //default period size
+@@ -149,21 +141,21 @@ struct pcm_config pcm_config_in = {
+     .start_threshold = 1,
+     .stop_threshold = (IN_PERIOD_SIZE * IN_PERIOD_COUNT),
+ };
+-//hifi pcm config for 16ch and 32bitLE
++//hifi pcm config for 16ch and 32bitLE expected from framework
+ struct pcm_config pcm_config_out_hifi = {
+     .channels = 12,
+     .rate = OUT_SAMPLING_RATE,
+     .period_size = OUT_PERIOD_SIZE_HIFI,
+     .period_count = OUT_PERIOD_COUNT_HIFI,
+-    .format = PCM_FORMAT_S24_3LE,
++    .format = PCM_FORMAT_S32_LE,
+     .start_threshold = (OUT_PERIOD_SIZE_HIFI * OUT_PERIOD_COUNT_HIFI),
+ };
+ struct pcm_config pcm_config_in_hifi = {
+-    .channels = 4,
++    .channels = 2,
+     .rate = IN_SAMPLING_RATE,
+     .period_size = IN_PERIOD_SIZE,
+     .period_count = IN_PERIOD_COUNT,
+-    .format = PCM_FORMAT_S24_3LE,
++    .format = PCM_FORMAT_S32_LE,
+     .start_threshold = 1,
+     .stop_threshold = (IN_PERIOD_SIZE * IN_PERIOD_COUNT),
+ };
+@@ -470,18 +462,29 @@ pcm_data_t *route_out_pcm(struct stream_out *out,bus_addresses_t bus_to_device)
+         case bus0_audio_zone_0:
+             /*audio zone 0*/
+             if (adev->custom_audio) {
+-                adev->card = get_pcm_card("Dummy");
+-                adev->device  = PCM_DEVICE_DUMMY;
++                adev->card = get_pcm_card("ssp0loopback");
++                adev->device  = PCM_DEVICE_AVS;
+                 out->pcm_config->format =  pcm_config_out_hifi.format;
+                 out->pcm_config->period_size = pcm_config_out_hifi.period_size;
+                 out->pcm_config->period_count = pcm_config_out_hifi.period_count;
+                 if (!(strcmp(out->bus_address,"bus0_media_out")))
+-                    out->pcm_config->channels = OUT_CHANNELS;
++                    out->pcm_config->channels = MAX_OUT_CHANNELS;
+                 else
+                     out->pcm_config->channels = 2;
+             } else {
+                 adev->card = get_pcm_card("avsrt56401");
+                 adev->device  = PCM_DEVICE_AVS;
++                adev->audio_zone = 1;
++                out->pcm_config->rate = OUT_SAMPLING_RATE;
++                out->pcm_config->channels = 2;
++                ALOGV("bus100_audio_zone_1 is asked adev->card %d\n",adev->card);
++                if (adev->card < 0) {
++                    adev->card = get_pcm_card("Dummy");
++                    adev->device  = PCM_DEVICE;
++                    out->pcm_config->channels = 2;
++                    out->pcm_config->rate = OUT_SAMPLING_RATE;
++                    ALOGV("default Audio primary cards asked  1\n");
++                }
+             }
+             adev->audio_zone = 0; 
+             out->pcm_config->rate = OUT_SAMPLING_RATE;
+@@ -607,14 +610,17 @@ static int start_input_stream(struct stream_in *in)
+     if (!strcmp(in->bus_address,"bus_1000_input_zone_0")) {
+         ALOGV("the input is in zone 0 bus_1000_input_zone_0");
+         if (adev->custom_audio) {
+-            adev->cardc = get_pcm_card("Dummy");
+-            adev->device  = PCM_DEVICE_DUMMY;
++            adev->cardc = get_pcm_card("ssp0loopback");
++            adev->device  = PCM_DEVICE_AVS;
+         } else {
+             adev->cardc = get_pcm_card("avsrt56401");
+             adev->device  = PCM_DEVICE_AVS;
+         }
+         if (adev->cardc < 0)
++	{
+             adev->cardc = get_pcm_card("Dummy");
++            adev->device  = PCM_DEVICE_DUMMY;
++	}
+     } else if (!strcmp(in->bus_address,"bus_2000_input_zone_1")) {
+         ALOGV("the input is in zone 1 bus_2000_input_zone_1");
+         adev->cardc = get_pcm_card("avsrt56402");
+@@ -628,18 +634,22 @@ static int start_input_stream(struct stream_in *in)
+         ALOGV("%s : opening pcm [%d : %d] for config : [rate %d format %d channels %d]", __func__,
+               adev->bt_card, PCM_DEVICE, bt_in_config.rate, bt_in_config.format,
+               bt_in_config.channels);
+-
++          
+         in->pcm = pcm_open(adev->bt_card, PCM_DEVICE, PCM_IN, &bt_in_config);
+ //BT SCO VoIP Call]
+     } else {
+         ALOGI("PCM record card selected = %d, \n", adev->cardc);
+-
++	if(adev->custom_audio) {
++            in->pcm_config->format = PCM_FORMAT_S32_LE;
++	    in->pcm_config->channels = MAX_IN_CHANNELS;
++	    in->pcm_config->period_size = IN_PERIOD_SIZE;
++	    in->pcm_config->period_count = IN_PERIOD_COUNT;
++	    in->pcm_config->rate = IN_SAMPLING_RATE;
++	}
+         ALOGV("%s : config : [rate %d format %d channels %d]", __func__,
+             in->pcm_config->rate, in->pcm_config->format, in->pcm_config->channels);
+-
+         in->pcm = pcm_open(adev->cardc, adev->device, PCM_IN, in->pcm_config);
+     }
+-
+     if (!in->pcm) {
+         return -ENODEV;
+     } else if (!pcm_is_ready(in->pcm)) {
+@@ -982,7 +992,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+             size_t frames_in = round_to_16_mult(out->pcm_config->period_size);
+             size_t frames_out = round_to_16_mult(out->pcm_config->period_size);
+             int32_t in_channels = popcount(out->req_config.channel_mask);
+-            int32_t out_channels = OUT_CHANNELS;
++            int32_t out_channels = MAX_OUT_CHANNELS;
+             size_t buf_size_out = out_channels * frames_out * SAMPLE_SIZE_IN_BYTES_HIFI;
+             size_t buf_size_in = in_channels * frames_in * SAMPLE_SIZE_IN_BYTES_HIFI;
+             int32_t *buf_out = (int32_t *) malloc (buf_size_out);
+@@ -1187,10 +1197,18 @@ static size_t in_get_buffer_size(const struct audio_stream *stream)
+      * multiple of 16 frames, as audioflinger expects audio buffers to
+      * be a multiple of 16 frames
+      */
+-    size = (in->pcm_config->period_size * ((size_t) in_get_sample_rate(stream))) /
+-            in->pcm_config->rate;
+-    size = ((size + 15) / 16) * 16;
++    //Vendor property to check if custom audio is enabled
++    char custom[PROPERTY_VALUE_MAX] = "false";
++    property_get("ro.vendor.audio.custom", custom, NULL);
++    if (!strcmp(custom,"true")) {
++        size = (pcm_config_in_hifi.period_size * ((size_t)pcm_config_in_hifi.rate)) / pcm_config_in_hifi.rate;
++        size = ((size + 31) / 32) * 32;
++    } else {
+ 
++        size = (in->pcm_config->period_size * ((size_t) in_get_sample_rate(stream))) /
++            in->pcm_config->rate;
++        size = ((size + 15) / 16) * 16;
++    }
+     size *= audio_stream_in_frame_size(&in->stream);
+     ALOGV("%s : buffer_size : %zu", __func__, size);
+     return size;
+@@ -1420,8 +1438,8 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+         memset(buf_in, 0, buf_size_in);
+         memset(buf_remapped, 0, buf_size_remapped);
+         memset(buf_out, 0, buf_size_out);
+-
+-        ret = pcm_read(in->pcm, buf_in, buf_size_in);
++        
++	ret = pcm_read(in->pcm, buf_in, buf_size_in);
+         in->frames_read += frames_in;
+         struct aec_info info;
+         get_pcm_timestamp(in->pcm, in->pcm_config->rate, &info, false /*isOutput*/);
+@@ -1472,8 +1490,23 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+         free(buf_remapped);
+ //BT SCO VoIP Call]
+     } else {
+-        /* pcm read for primary card */
+-        ret = pcm_read(in->pcm, buffer, bytes);
++         	    
++         if(adev->custom_audio) {
++            //allocate 16 
++            size_t frames_in = round_to_16_mult(IN_PERIOD_SIZE);
++            size_t buf_size_in_16 = MAX_IN_CHANNELS * frames_in * SAMPLE_SIZE_IN_BYTES_HIFI;
++            int32_t *buf_in_16 = (int32_t *) malloc (buf_size_in_16);
++
++            ret = pcm_read(in->pcm, buf_in_16, buf_size_in_16);
++
++	    //adjust channel to 2 to framework buffer
++            adjust_channels(buf_in_16, MAX_IN_CHANNELS, buffer, 2, 
++                                        SAMPLE_SIZE_IN_BYTES_HIFI, buf_size_in_16);
++	    free(buf_in_16);
++	}
++	else
++            /* pcm read for primary card */
++            ret = pcm_read(in->pcm, buffer, bytes);
+ 
+ #ifdef DEBUG_PCM_DUMP
+         if (in_read_dump != NULL) {
+@@ -1498,7 +1531,6 @@ exit:
+     if (ret < 0)
+         usleep(bytes * 1000000 / audio_stream_in_frame_size(stream) /
+                in_get_sample_rate(&stream->common));
+-
+     return bytes;
+ }
+ 
+@@ -1663,13 +1695,15 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
+     if (parms == NULL)
+         return 0;
+     if (adev->custom_audio) {
+-        adev->primarycard = get_pcm_card("Dummy");
+-        adev->device = PCM_DEVICE_DUMMY;
++        adev->primarycard = get_pcm_card("ssp0loopback");
++        adev->device = PCM_DEVICE_AVS;
+     } else {
+         adev->primarycard = get_pcm_card("avsrt56401");
+         adev->device = PCM_DEVICE_AVS;
+-        if (adev->primarycard < 0)
++        if (adev->primarycard < 0){
+             adev->primarycard = get_pcm_card("Dummy");
++            adev->device = PCM_DEVICE_DUMMY;
++	}
+     }
+     update_bt_card(adev);
+ #ifdef DEBUG_WITH_DELAY
+@@ -1829,9 +1863,12 @@ static size_t adev_get_input_buffer_size(const struct audio_hw_device *dev ,
+      * 32 for 32bit support
+      */
+ 
+-    if (adev->custom_audio) {
++    //Vendor property to check if custom audio is enabled
++    char custom[PROPERTY_VALUE_MAX] = "false";
++    property_get("ro.vendor.audio.custom", custom, NULL);
++    if (!strcmp(custom,"true")) {
+         size = (pcm_config_in_hifi.period_size * ((size_t)config->sample_rate)) / pcm_config_in_hifi.rate;
+-        size = ((size + 21) / 24) * 24;
++        size = ((size + 31) / 32) * 32;
+     }
+     else {
+         size = (pcm_config_in.period_size * ((size_t) config->sample_rate)) / pcm_config_in.rate;
+@@ -1862,9 +1899,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
+     *stream_in = NULL;
+     /*get default AVS card 1 info*/
+     if (adev->custom_audio)
+-        adev->cardc = get_pcm_card("Dummy");
++        adev->cardc = get_pcm_card("ssp0loopback");
+     else
+-    adev->cardc = get_pcm_card("avsrt56401");
++        adev->cardc = get_pcm_card("avsrt56401");
+ 
+     if (adev->cardc < 0)
+         adev->cardc = get_pcm_card("Dummy");
+@@ -2014,7 +2051,7 @@ static int prepare_loopback_parameters(struct audio_device *adev)
+     primary_hfp_config.period_size = PRIMARY_PERIOD_SIZE;
+     primary_hfp_config.period_count = PRIMARY_PERIOD_COUNT;
+     if (adev->custom_audio) {
+-        primary_hfp_config.channels = OUT_CHANNELS;
++        primary_hfp_config.channels = MAX_OUT_CHANNELS;
+     }
+     adev->primary_in_proxy_pcm = pcm_open(adev->primarycard, adev->device, PCM_IN ,
+                                           &primary_hfp_config);
+@@ -2078,7 +2115,7 @@ static int prepare_loopback_parameters(struct audio_device *adev)
+     primary_hfp_config.period_size = PRIMARY_PERIOD_SIZE;
+     primary_hfp_config.period_count = PRIMARY_PERIOD_COUNT;
+     if (adev->custom_audio) {
+-        primary_hfp_config.channels = OUT_CHANNELS;
++        primary_hfp_config.channels = MAX_OUT_CHANNELS;
+     }
+     adev->primary_out_proxy_pcm = pcm_open(adev->primarycard, adev->device, PCM_OUT,
+                                            &primary_hfp_config);
+@@ -2237,7 +2274,7 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+ 	//intermediate output to primary 24bit
+         buf_size_out = in_config->channels * frames_out * SAMPLE_SIZE_IN_BYTES_HIFI /*24bit -> 4bytes */;
+         //output to primary
+-        int32_t out_channels = OUT_CHANNELS;
++        int32_t out_channels = MAX_OUT_CHANNELS;
+         buf_size_out_hifi = out_channels * frames_out * SAMPLE_SIZE_IN_BYTES_HIFI;
+         buf_size_out_hifi_offset = 13 * frames_out * SAMPLE_SIZE_IN_BYTES_HIFI;
+ 
+@@ -2595,7 +2632,7 @@ void* run_primary_bt_loopback(void *args)
+     primary_hfp_config.period_size = PRIMARY_PERIOD_SIZE;
+     primary_hfp_config.period_count = PRIMARY_PERIOD_COUNT;
+     if (adev->custom_audio) {
+-        primary_hfp_config.channels = OUT_CHANNELS;
++        primary_hfp_config.channels = MAX_OUT_CHANNELS;
+     }
+ 
+     looper(adev, &primary_hfp_config, &bt_hfp_out_config, adev->primary_in_proxy_pcm,
+@@ -2622,7 +2659,7 @@ void* run_bt_primary_loopback(void *args)
+     primary_hfp_config.period_count = PRIMARY_PERIOD_COUNT;
+ 
+     if (adev->custom_audio) {
+-        primary_hfp_config.channels = OUT_CHANNELS;
++        primary_hfp_config.channels = MAX_OUT_CHANNELS;
+     }
+     looper(adev, &bt_hfp_in_config, &primary_hfp_config, adev->bt_in_proxy_pcm,
+            adev->primary_out_proxy_pcm, "bt_to_primary");
+@@ -2663,7 +2700,7 @@ static int mixer_setting_for_volume(float left, float right, int audio_zone)
+     struct mixer_ctl *vol_ctl;
+ 
+     ALOGV("%s enter", __func__);
+-    card = get_pcm_card("avsrt56401");
++    card = get_pcm_card("ssp0loopback");
+     if (card < 0)
+             card = PCM_CARD_DEFAULT;
+     if (audio_zone == 1) {
+@@ -2713,7 +2750,7 @@ static int adev_set_audio_port_config(struct audio_hw_device *dev ,
+ 
+     snprintf(mixer_path,PATH_MAX,"/vendor/etc/mixer_paths_%d.xml", card);
+     if (adev->custom_audio)
+-        card = get_pcm_card("Dummy");
++        card = get_pcm_card("ssp0loopback");
+     else
+         card = get_pcm_card("avsrt56401");
+     if (card < 0)
+@@ -2831,7 +2868,7 @@ static int adev_open(const hw_module_t* module, const char* name,
+     snprintf(mixer_path,PATH_MAX,"/vendor/etc/mixer_paths_%d.xml", card);
+     {
+         if (adev->custom_audio)
+-            card = get_pcm_card("Dummy");
++            card = get_pcm_card("ssp0loopback");
+         else
+             card = get_pcm_card("avsrt56401");
+         if (card < 0)
+@@ -2909,7 +2946,7 @@ static int adev_open(const hw_module_t* module, const char* name,
+     sco_call_read_bt = fopen("/vendor/dump/sco_call_read_bt.pcm", "a");
+     out_write_dump = fopen("/data/out_write_dump.pcm", "a");
+     out_write_dump_before = fopen("/data/out_write_dump_before.pcm", "a");
+-    in_read_dump = fopen("/vendor/dump/in_read_dump.pcm", "a");
++    in_read_dump = fopen("/data/in_read_dump.pcm", "a");
+ 
+     if (sco_call_write == NULL || sco_call_write_remapped == NULL || sco_call_write_bt == NULL || sco_call_read == NULL || 
+             sco_call_read_bt == NULL || sco_call_read_remapped == NULL || out_write_dump == NULL || in_read_dump == NULL)
+-- 
+2.39.2
+

@@ -1,0 +1,29 @@
+From 9f10ea24efb3b91a5afe2c9a07adedafc97a85f2 Mon Sep 17 00:00:00 2001
+From: Deepa K G <g.k.deepa@intel.com>
+Date: Fri, 15 Sep 2023 08:05:41 +0530
+Subject: [PATCH] Enable Custom audio
+
+Enabling the 16ch 32bit 48k support for capture and playback
+
+Tracked-On: OAM-112117
+Signed-off-by: Deepa K G g.k.deepa@intel.com
+---
+ mixins.spec | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mixins.spec b/mixins.spec
+index d1836f1..8ae67d6 100755
+--- a/mixins.spec
++++ b/mixins.spec
+@@ -12,7 +12,7 @@ disk-bus: auto
+ boot-arch: project-celadon(fw_sbl=true,fastboot=efi,ignore_rsci=true,disable_watchdog=true,watchdog_parameters=10 30,verity_warning=false,txe_bind_root_of_trust=false,bootloader_block_size=4096,verity_mode=false,disk_encryption=false,file_encryption=true,metadata_encryption=true,fsverity=true,target=apollo_ivi,ignore_not_applicable_reset=true,self_usb_device_mode_protocol=true,usb_storage=true,live_boot=true,userdata_checkpoint=true)
+ sepolicy: permissive
+ bluetooth: btusb(ivi=false)
+-audio: project-celadon(ivi=true)
++audio: AudioCustom(ivi=true)
+ vendor-partition: true(partition_size=600,partition_name=vendor)
+ vendor-boot: true(partition_size=16,bootconfig_enable=true)
+ acpio-partition: true(partition_size=2)
+-- 
+2.17.1
+
