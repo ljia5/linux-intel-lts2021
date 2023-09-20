@@ -1,0 +1,36 @@
+From 47646396916280dea8fe1cb19c94d2a75452c6fe Mon Sep 17 00:00:00 2001
+From: "Zhao, Shirley" <shirley.zhao@intel.com>
+Date: Tue, 12 Sep 2023 15:20:00 +0800
+Subject: [PATCH] Enable spi dev and spi slave
+
+1. Enable spidev driver as module.
+2. Enable SPI slave mode.
+
+Tracked-On: OAM-112195
+Signed-off-by: Zhao, Shirley <shirley.zhao@intel.com>
+---
+ .../gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig  | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+index 450e567..baf9c0f 100644
+--- a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
++++ b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+@@ -3066,10 +3066,12 @@ CONFIG_SPI_PXA2XX_PCI=y
+ #
+ # SPI Protocol Masters
+ #
+-# CONFIG_SPI_SPIDEV is not set
++CONFIG_SPI_SPIDEV=m
+ # CONFIG_SPI_LOOPBACK_TEST is not set
+ # CONFIG_SPI_TLE62X0 is not set
+-# CONFIG_SPI_SLAVE is not set
++CONFIG_SPI_SLAVE=y
++CONFIG_SPI_SLAVE_TIME=m
++CONFIG_SPI_SLAVE_SYSTEM_CONTROL=m
+ CONFIG_SPI_DYNAMIC=y
+ # CONFIG_SPMI is not set
+ # CONFIG_HSI is not set
+-- 
+2.42.0
+
