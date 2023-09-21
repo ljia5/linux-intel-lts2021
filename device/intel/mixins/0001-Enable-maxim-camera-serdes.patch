@@ -1,0 +1,36 @@
+From 63e473c0be5ee1211a22e20fac68e9015f2cf17f Mon Sep 17 00:00:00 2001
+From: Chang Ying <ying.chang@intel.com>
+Date: Sat, 22 Jul 2023 17:46:59 +0800
+Subject: [PATCH] Enable maxim camera serdes
+
+Tracked-On: OAM-111330
+Signed-off-by: Chang Ying <ying.chang@intel.com>
+
+diff --git a/groups/ipu/true/init.rc b/groups/ipu/true/init.rc
+index 25e741a..61c9fc9 100644
+--- a/groups/ipu/true/init.rc
++++ b/groups/ipu/true/init.rc
+@@ -6,4 +6,7 @@ on post-fs
+     insmod /vendor/lib/modules/intel-ipu6.ko
+     insmod /vendor/lib/modules/ti960.ko
+     insmod /vendor/lib/modules/isx031.ko
++	insmod /vendor/lib/modules/max9295a_dummy.ko
++	insmod /vendor/lib/modules/max96717f_dummy.ko
++	insmod /vendor/lib/modules/max96722.ko
+     insmod /vendor/lib/modules/intel-ipu6-isys.ko
+diff --git a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+index 7b4928e..0eee9cb 100644
+--- a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
++++ b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+@@ -3824,6 +3824,9 @@ CONFIG_VIDEOBUF2_DMA_CONTIG=m
+ CONFIG_RADIO_ADAPTERS=y
+ CONFIG_VIDEO_ISX031=m
+ CONFIG_VIDEO_TI960=m
++CONFIG_VIDEO_MAX9295A=m
++CONFIG_VIDEO_MAX96717F=m
++CONFIG_VIDEO_MAX96722=m
+ CONFIG_VIDEO_HKR=m
+ # CONFIG_VIDEO_INTEL_IPU_PDATA_DYNAMIC_LOADING is not set
+ # CONFIG_VIDEO_INTEL_IPU_WERROR is not set
+--
+2.17.1
