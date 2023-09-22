@@ -1,0 +1,26 @@
+From b2d0c532f644c364cb63d94fab9c80010fc6230f Mon Sep 17 00:00:00 2001
+From: shivasku82 <shiva.kumara.rudrappa@intel.com>
+Date: Mon, 25 Sep 2023 17:17:35 +0530
+Subject: [PATCH] mixin spec change for adding v4l2loopback module
+
+adding v42loopback in mixin spec
+
+Tracked-On: OAM-112381
+Change-Id: Ieb296a961ab40db1e26101d04382751f6f921711
+Signed-off-by: shivasku82 <shiva.kumara.rudrappa@intel.com>
+---
+ mixins.spec | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/mixins.spec b/mixins.spec
+index 8386bb3..12e445a 100755
+--- a/mixins.spec
++++ b/mixins.spec
+@@ -92,3 +92,4 @@ houdini: true
+ neuralnetworks: true
+ docker: true
+ ipu: true
++v4l2loopback: true
+-- 
+2.17.1
+

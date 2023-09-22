@@ -1,0 +1,119 @@
+From 8e3d8300362f2185d6e46aa62a94d7152d9275ed Mon Sep 17 00:00:00 2001
+From: Neo Fang <neo.fang@intel.com>
+Date: Wed, 13 Sep 2023 15:19:19 +0000
+Subject: [PATCH] Update Kconfig and Makefile to compile v4l2loopback driver
+
+Kconfig and Makefile changes done to compile v4l2loopback as part of
+kernel build.
+
+Tracked-On: OAM-112223
+Signed-off-by: Neo Fang <neo.fang@intel.com>
+---
+ drivers/staging/media/Kconfig               |  3 ++
+ drivers/staging/media/Makefile              |  1 +
+ drivers/staging/media/v4l2loopback/Kconfig  |  8 +++++
+ drivers/staging/media/v4l2loopback/Makefile | 36 ++-------------------
+ 4 files changed, 14 insertions(+), 34 deletions(-)
+ create mode 100644 drivers/staging/media/v4l2loopback/Kconfig
+
+diff --git a/drivers/staging/media/Kconfig b/drivers/staging/media/Kconfig
+index e3aaae920847..24f64792f35a 100644
+--- a/drivers/staging/media/Kconfig
++++ b/drivers/staging/media/Kconfig
+@@ -45,3 +45,6 @@ source "drivers/staging/media/ipu3/Kconfig"
+ source "drivers/staging/media/av7110/Kconfig"
+ 
+ endif
++
++source "drivers/staging/media/v4l2loopback/Kconfig"
++
+diff --git a/drivers/staging/media/Makefile b/drivers/staging/media/Makefile
+index 5b5afc5b03a0..fec1ddd86c59 100644
+--- a/drivers/staging/media/Makefile
++++ b/drivers/staging/media/Makefile
+@@ -11,3 +11,4 @@ obj-$(CONFIG_VIDEO_HANTRO)	+= hantro/
+ obj-$(CONFIG_VIDEO_IPU3_IMGU)	+= ipu3/
+ obj-$(CONFIG_VIDEO_ZORAN)	+= zoran/
+ obj-$(CONFIG_DVB_AV7110)	+= av7110/
++obj-$(CONFIG_VIDEO_V4L2LOOPBACK)	+= v4l2loopback/
+diff --git a/drivers/staging/media/v4l2loopback/Kconfig b/drivers/staging/media/v4l2loopback/Kconfig
+new file mode 100644
+index 000000000000..33c634f13510
+--- /dev/null
++++ b/drivers/staging/media/v4l2loopback/Kconfig
+@@ -0,0 +1,8 @@
++# SPDX-License-Identifier: GPL-2.0
++config VIDEO_V4L2LOOPBACK
++	tristate "v4l2loopback driver"
++	default m
++	depends on VIDEO_V4L2
++	depends on X86
++	help
++	  This is the v4l2loopback driver.
+diff --git a/drivers/staging/media/v4l2loopback/Makefile b/drivers/staging/media/v4l2loopback/Makefile
+index a6c82f77d0f1..f2d5c0254405 100644
+--- a/drivers/staging/media/v4l2loopback/Makefile
++++ b/drivers/staging/media/v4l2loopback/Makefile
+@@ -31,35 +31,18 @@ MODULE_OPTIONS = devices=2
+ 
+ 
+ .PHONY: all install clean distclean
+-.PHONY: install-all install-utils install-man
+-.PHONY: modprobe v4l2loopback
+ 
+ # we don't control the .ko file dependencies, as it is done by kernel
+ # makefiles. therefore v4l2loopback.ko is a phony target actually
+-.PHONY: v4l2loopback.ko utils
++.PHONY: v4l2loopback.ko
+ 
+-all: v4l2loopback.ko utils
++all: v4l2loopback.ko
+ 
+ v4l2loopback: v4l2loopback.ko
+ v4l2loopback.ko:
+ 	@echo "Building v4l2-loopback driver..."
+ 	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) modules
+ 
+-install-all: install install-utils install-man
+-install:
+-	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) modules_install
+-	@echo ""
+-	@echo "SUCCESS (if you got 'SSL errors' above, you can safely ignore them)"
+-	@echo ""
+-
+-install-utils: utils/v4l2loopback-ctl
+-	$(INSTALL_DIR) "$(DESTDIR)$(BINDIR)"
+-	$(INSTALL_PROGRAM) $< "$(DESTDIR)$(BINDIR)"
+-
+-install-man: man/v4l2loopback-ctl.1
+-	$(INSTALL_DIR) "$(DESTDIR)$(MAN1DIR)"
+-	$(INSTALL_DATA) $< "$(DESTDIR)$(MAN1DIR)"
+-
+ clean:
+ 	rm -f *~
+ 	rm -f Module.symvers Module.markers modules.order
+@@ -69,21 +52,6 @@ clean:
+ distclean: clean
+ 	rm -f man/v4l2loopback-ctl.1
+ 
+-modprobe: v4l2loopback.ko
+-	chmod a+r v4l2loopback.ko
+-	sudo modprobe videodev
+-	-sudo rmmod v4l2loopback
+-	sudo insmod ./v4l2loopback.ko $(MODULE_OPTIONS)
+-
+-man/v4l2loopback-ctl.1: utils/v4l2loopback-ctl
+-	help2man -N --name "control v4l2 loopback devices" \
+-		--no-discard-stderr --help-option=-h --version-option=-v \
+-		$^ > $@
+-
+-utils: utils/v4l2loopback-ctl
+-utils/v4l2loopback-ctl: utils/v4l2loopback-ctl.c
+-	$(MAKE) -C utils
+-
+ .clang-format:
+ 	curl "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/.clang-format" > $@
+ 
+-- 
+2.17.1
+
