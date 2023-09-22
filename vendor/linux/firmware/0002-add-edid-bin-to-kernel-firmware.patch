@@ -1,0 +1,58 @@
+From 2f2e948418f874338cd10ca28232fdbfa4394880 Mon Sep 17 00:00:00 2001
+From: kanlihu <kanli.hu@intel.com>
+Date: Thu, 10 Aug 2023 20:30:57 +0800
+Subject: [PATCH] add edid bin to kernel firmware
+
+add edid to kernel firmware
+make DP-2 load 1080p edid
+
+Tracked-On: OAM-112349
+Signed-off-by: Kanli Hu <kanli.hu@intel.com>
+---
+ edid/aoc_4k.bin     | Bin 0 -> 128 bytes
+ edid/asus_2k.bin    | Bin 0 -> 128 bytes
+ edid/dell_1080p.bin | Bin 0 -> 128 bytes
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 edid/aoc_4k.bin
+ create mode 100644 edid/asus_2k.bin
+ create mode 100644 edid/dell_1080p.bin
+
+diff --git a/edid/aoc_4k.bin b/edid/aoc_4k.bin
+new file mode 100644
+index 0000000000000000000000000000000000000000..8951b645e055955a3a30c24cf09a4259d1a218fd
+GIT binary patch
+literal 128
+zcmZSh4+adZkIU6n1sE7~<QSP7Y?LbWG^Q>O^;@jQ9}vR8z`%$Gd@nF8_)uWiV4z^i
+z5E`J!z#s)w^q;{oz}Lso($T=c#L(CnDDsEFC(Ov)*dsI`h)Y310Vwj9LEKxe$A$sK
+I1&J&L0Ga0=0RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/edid/asus_2k.bin b/edid/asus_2k.bin
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef24f935ba6414fb35ce3e0b9f9e0ff866f9d22f
+GIT binary patch
+literal 128
+zcmZSh4+acuoA;?R0)eCgBXfg|Qiaxk(PhD2Gt~G4LKqkrKr+Z6ERJEpf(4oZ1`4JO
+zp#h2v3{pTve;Fja<qG5&xD>zuDDsCPz|qLuBG5GqECv+$&){d~;~N-kU}9-zV#LMp
+F001<g9RUCU
+
+literal 0
+HcmV?d00001
+
+diff --git a/edid/dell_1080p.bin b/edid/dell_1080p.bin
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a56a16bc433518b36841fc1907b55ac6159f6a0
+GIT binary patch
+literal 128
+zcmZSh4+abZYnD2O2SquH$}_SoHI=KddpC7)h|f$l{(uk$1_nknz+}}RQD~v-5TWDB
+zz^|dmz#s=y^q;}l&(9#t!k9||1b`xc7+hR^d=x^BObjhOg1LYqe;F)%<bnkmAxab&
+FIsn8<9RUCU
+
+literal 0
+HcmV?d00001
+
+-- 
+2.40.0
+

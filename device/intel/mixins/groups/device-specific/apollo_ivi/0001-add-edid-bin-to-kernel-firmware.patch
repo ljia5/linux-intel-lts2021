@@ -1,0 +1,32 @@
+From b269eea986d386c9719ec1f84ebe046b77419f62 Mon Sep 17 00:00:00 2001
+From: kanlihu <kanli.hu@intel.com>
+Date: Fri, 22 Sep 2023 22:37:35 +0800
+Subject: [PATCH] add edid bin to kernel firmware
+
+add edid to kernel firmware
+make DP-2 load 1080p edid
+
+Tracked-On: OAM-112349
+Change-Id: I978dad8c6c9205f24af3dd5dd2935fbd259ac8da
+Signed-off-by: Kanli Hu <kanli.hu@intel.com>
+---
+ BoardConfig.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index d5b6126..fa8339b 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -8,6 +8,9 @@ BOARD_KERNEL_CMDLINE += \
+ 	i915.enable_pvmmio=0 \
+ 	loop.max_part=7 \
+ 
++BOARD_KERNEL_CMDLINE += \
++	drm.edid_firmware=DP-2:edid/dell_1080p.bin
++
+ # for ramoops
+ ifneq ($(TARGET_BUILD_VARIANT),user)
+ BOARD_KERNEL_CMDLINE += \
+-- 
+2.40.0
+

@@ -1,0 +1,29 @@
+From 72084804a257a7caf8a47ec3b4aee3aeb34a9d1e Mon Sep 17 00:00:00 2001
+From: kanlihu <kanli.hu@intel.com>
+Date: Thu, 10 Aug 2023 23:50:42 +0800
+Subject: [PATCH] add edid bin to kernel firmware
+
+add edid to kernel firmware
+make DP-2 load 1080p edid
+
+Tracked-On: OAM-112349
+Signed-off-by: Kanli Hu <kanli.hu@intel.com>
+---
+ firmware.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/firmware.mk b/firmware.mk
+index d66894a..185ca51 100644
+--- a/firmware.mk
++++ b/firmware.mk
+@@ -28,6 +28,7 @@ else
+ 
+ ## List of complete Firmware folders to be copied
+ LOCAL_FIRMWARE_DIR := \
++    edid \
+     intel
+ 
+ ## List of matching patterns of Firmware bins to be copied
+-- 
+2.40.0
+
