@@ -1,0 +1,23 @@
+From fcb43dd4a08b5044b1330fc30fd44e6bff706291 Mon Sep 17 00:00:00 2001
+From: "Wang, Liang" <liang.wang@intel.com>
+Date: Sat, 23 Sep 2023 17:21:41 +0800
+Subject: [PATCH] Mixins spec for ipu added
+
+Change-Id: I72385903d4e0fcfdec9cfca168e8cccfdc8a1063
+Signed-off-by: Wang, Liang <liang.wang@intel.com>
+---
+ mixins.spec | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/mixins.spec b/mixins.spec
+index dbf0cfe..1be924f 100755
+--- a/mixins.spec
++++ b/mixins.spec
+@@ -91,3 +91,4 @@ mainline-mod: true
+ houdini: true
+ neuralnetworks: true
+ docker: true
++ipu: true
+-- 
+2.34.1
+
