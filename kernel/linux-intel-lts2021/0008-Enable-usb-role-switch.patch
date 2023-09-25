@@ -1,0 +1,343 @@
+From 516949cf0c8b19079dda448ebe71c5e047a441fd Mon Sep 17 00:00:00 2001
+From: Balaji M <m.balaji@intel.com>
+Date: Thu, 21 Sep 2023 05:07:05 +0530
+Subject: [PATCH] Enable usb role switch
+
+Enabled platform support for USB role switch
+between device and host modes on the same USB port.
+
+Tracked-On: OAM-112366
+Signed-off-by: Balaji M <m.balaji@intel.com>
+---
+ drivers/usb/host/xhci-ext-caps.c              |  17 +-
+ drivers/usb/host/xhci-pci.c                   |   3 +
+ .../usb/roles/intel-xhci-usb-role-switch.c    | 215 +++++++++++++++++-
+ 3 files changed, 231 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/usb/host/xhci-ext-caps.c b/drivers/usb/host/xhci-ext-caps.c
+index 7a4c2c4ad50e..00000695f89b 100644
+--- a/drivers/usb/host/xhci-ext-caps.c
++++ b/drivers/usb/host/xhci-ext-caps.c
+@@ -14,6 +14,10 @@
+ #define USB_SW_RESOURCE_SIZE	0x400
+ 
+ #define PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI	0x22b5
++#define PCI_DEVICE_ID_INTEL_RAPTOR_LAKE_XHCI    0xa71e
++#define PCI_DEVICE_ID_INTEL_ALDER_LAKE_PCH_XHCI 0x51ed
++
++#define INTEL_EXTENDED_CAP_DAP_OFFSET           0x8900
+ 
+ static const struct property_entry role_switch_props[] = {
+ 	PROPERTY_ENTRY_BOOL("sw_switch_disable"),
+@@ -40,8 +44,13 @@ static int xhci_create_intel_xhci_sw_pdev(struct xhci_hcd *xhci, u32 cap_offset)
+ 			 USB_SW_DRV_NAME);
+ 		return -ENOMEM;
+ 	}
+-
+-	res.start = hcd->rsrc_start + cap_offset;
++	if (pci->device == PCI_DEVICE_ID_INTEL_RAPTOR_LAKE_XHCI ||
++	    pci->device == PCI_DEVICE_ID_INTEL_ALDER_LAKE_PCH_XHCI) {
++		/* Extended cap for role switch starts at 0x8900 */
++		res.start = hcd->rsrc_start + INTEL_EXTENDED_CAP_DAP_OFFSET;
++	} else {
++		res.start = hcd->rsrc_start + cap_offset;
++	}
+ 	res.end	  = res.start + USB_SW_RESOURCE_SIZE - 1;
+ 	res.name  = USB_SW_DRV_NAME;
+ 	res.flags = IORESOURCE_MEM;
+@@ -53,7 +62,9 @@ static int xhci_create_intel_xhci_sw_pdev(struct xhci_hcd *xhci, u32 cap_offset)
+ 		return ret;
+ 	}
+ 
+-	if (pci->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI) {
++	if (pci->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
++		pci->device == PCI_DEVICE_ID_INTEL_RAPTOR_LAKE_XHCI ||
++		pci->device == PCI_DEVICE_ID_INTEL_ALDER_LAKE_PCH_XHCI) {
+ 		ret = device_create_managed_software_node(&pdev->dev, role_switch_props,
+ 							  NULL);
+ 		if (ret) {
+diff --git a/drivers/usb/host/xhci-pci.c b/drivers/usb/host/xhci-pci.c
+index fea3b92d6a40..9fe6d66d0208 100644
+--- a/drivers/usb/host/xhci-pci.c
++++ b/drivers/usb/host/xhci-pci.c
+@@ -61,6 +61,7 @@
+ #define PCI_DEVICE_ID_INTEL_MAPLE_RIDGE_XHCI		0x1138
+ #define PCI_DEVICE_ID_INTEL_ALDER_LAKE_PCH_XHCI		0x51ed
+ #define PCI_DEVICE_ID_INTEL_ALDER_LAKE_N_PCH_XHCI	0x54ed
++#define PCI_DEVICE_ID_INTEL_RAPTOR_LAKE_XHCI            0xa71e
+ 
+ #define PCI_DEVICE_ID_AMD_RENOIR_XHCI			0x1639
+ #define PCI_DEVICE_ID_AMD_PROMONTORYA_4			0x43b9
+@@ -238,6 +239,8 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
+ 	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+ 	    (pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
+ 	     pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
++	     pdev->device == PCI_DEVICE_ID_INTEL_RAPTOR_LAKE_XHCI ||
++	     pdev->device == PCI_DEVICE_ID_INTEL_ALDER_LAKE_PCH_XHCI ||
+ 	     pdev->device == PCI_DEVICE_ID_INTEL_APL_XHCI))
+ 		xhci->quirks |= XHCI_INTEL_USB_ROLE_SW;
+ 	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+diff --git a/drivers/usb/roles/intel-xhci-usb-role-switch.c b/drivers/usb/roles/intel-xhci-usb-role-switch.c
+index 5c96e929acea..afaea7d3fb32 100644
+--- a/drivers/usb/roles/intel-xhci-usb-role-switch.c
++++ b/drivers/usb/roles/intel-xhci-usb-role-switch.c
+@@ -41,6 +41,65 @@
+ 
+ #define DRV_NAME			"intel_xhci_usb_sw"
+ 
++/*
++ * USBX DAP Private config registers
++ * (PID:PID_XHCI)
++ */
++/* DAP USB common Control Register */
++#define R_DAP_USB_COMMON_CONTROL_REG          0x04
++/* Split Die xDCI PCH VBUS (SDXPCHVBUS) */
++#define R_DAP_USB_SDXPCHVBUS                  0x01000000
++/* DAP USB2 Port Control 0 Register */
++#define R_DAP_USB2_PORT_CONTROL_0_REG_0       0xc4
++/* In connector type aware flow, this field is used in SW mode only */
++#define V_PCR_USB_CONNECTOR_EVENT_MASK        0x000000E0
++/* host subscription. */
++#define V_PCR_USB_CONNECTOR_EVENT_HOST        0x00000000
++/* device subscription. */
++#define V_PCR_USB_CONNECTOR_EVENT_DEVICE      0x00000060
++/* un-subscription */
++#define V_PCR_USB_DISCONNRCT_CONNECTOR_EVENT  0x00000020
++/* DBC subscription. */
++#define V_PCR_USB_CONNECTOR_EVENT_DBC         0x00000080
++/* SW_VBUS */
++#define V_PCR_USB_SW_VBUS                     0x00000100
++/* DAP USB2 Port Control 1 Register */
++#define R_DAP_USB2_PORT_CONTROL_1_REG_0       0xc8
++/* DAP USB2 Port Status Register */
++#define R_DAP_USB2_PORT_STATUS_REG_0          0xcc
++/* This field reflects live value of the DRD operation states
++ * with one-hot encodings
++ */
++#define V_PCR_USB_OP_STATUS_MASK              0x000000FF
++/* host */
++#define V_PCR_USB_OP_STATUS_HOST              0x00000001
++/* disconnected */
++#define V_PCR_USB_OP_STATUS_DISCONNECT        0x00000002
++/* guest */
++#define V_PCR_USB_OP_STATUS_GUEST             0x00000004
++/* device */
++#define V_PCR_USB_OP_STATUS_DEVICE            0x00000008
++/* PHY initialization. (default, dummy) */
++#define V_PCR_USB_OP_STATUS_PHY_INIT          0x00000010
++/* EXI BSSB adapter connected. */
++#define V_PCR_USB_OP_STATUS_EXI_BSSB          0x00000020
++/* DBC */
++#define V_PCR_USB_OP_STATUS_DBC               0x00000040
++/* over-subscribed device. */
++#define V_PCR_USB_OP_STATUS_OV_SUB_DEV        0x00000080
++/* Hardware VBUS */
++#define V_PCR_USB_OP_STATUS_HW_VBUS           0x00010000
++/* SPR program max count */
++#define V_PCR_USB_OP_MAX_TIMEOUT_COUNT        0x00001000
++/* DAP eSS Port Control 0 Register */
++#define R_DAP_ESS_PORT_CONTROL_0_REG_0        0x600
++/*  DAP eSS Port Status Register */
++#define R_DAP_ESS_PORT_STATUS_REG_0           0x608
++/* Port0 is configured as usb device mode */
++#define DEVICE_PORT_NUM                       0x00
++/* Enable USB DAP FEATURE */
++#define USB_DAP_ENABLED
++
+ struct intel_xhci_usb_data {
+ 	struct device *dev;
+ 	struct usb_role_switch *role_sw;
+@@ -52,6 +111,147 @@ static const struct software_node intel_xhci_usb_node = {
+ 	"intel-xhci-usb-sw",
+ };
+ 
++
++static enum usb_role intel_xhci_get_dap_port_status(unsigned int portnum,
++		struct intel_xhci_usb_data *data)
++{
++	unsigned int val;
++	unsigned int portoffset;
++	enum usb_role role;
++
++	portoffset = portnum * 0x10;
++	val = readl(data->base + (portoffset +
++				R_DAP_USB2_PORT_STATUS_REG_0));
++	if (val == V_PCR_USB_OP_STATUS_HOST)
++		role = USB_ROLE_HOST;
++	else if (val == V_PCR_USB_OP_STATUS_DEVICE ||
++		val == V_PCR_USB_OP_STATUS_OV_SUB_DEV)
++		role = USB_ROLE_DEVICE;
++	else
++		role = USB_ROLE_NONE;
++	return role;
++}
++
++
++void intel_xhci_force_port_xhci(unsigned int  portnum,
++		struct intel_xhci_usb_data *data)
++{
++	unsigned int portoffset;
++	unsigned int count;
++	unsigned int val;
++
++	portoffset = portnum * 0x10;
++	/* SDXPCHVBUS Set by CPU xDCI as USB2 connection in PCH is desired */
++	val = readl(data->base + (R_DAP_USB_COMMON_CONTROL_REG));
++	val &= ~R_DAP_USB_SDXPCHVBUS;
++	writel(val, data->base + (R_DAP_USB_COMMON_CONTROL_REG));
++	/* Initiate disconnect event */
++	val = readl(data->base + (portoffset +
++				R_DAP_USB2_PORT_CONTROL_0_REG_0));
++	val &= (unsigned int)(~V_PCR_USB_CONNECTOR_EVENT_MASK);
++	val |= V_PCR_USB_DISCONNRCT_CONNECTOR_EVENT;
++	writel(val, data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 +
++				portoffset));
++	/* Poll USB2 OP Status */
++	for (count = 0x00; count < V_PCR_USB_OP_MAX_TIMEOUT_COUNT; count++) {
++		val = readl(data->base +
++				(portoffset + R_DAP_USB2_PORT_STATUS_REG_0));
++		val &= V_PCR_USB_OP_STATUS_MASK;
++		/*
++		 * Device:  Poll 0x08 || 0x80 || 0x20
++		 * HOST:    Poll 0x01 || 0x20
++		 * DBC:     Poll 0x40
++		 * Discon:  Poll 0x02 || 0x10
++		 */
++		if (val == V_PCR_USB_OP_STATUS_DISCONNECT)
++			break;
++	}
++	val = readl(data->base + (portoffset + R_DAP_USB2_PORT_CONTROL_0_REG_0));
++	val &= ~(V_PCR_USB_CONNECTOR_EVENT_MASK);
++	val |= V_PCR_USB_CONNECTOR_EVENT_HOST;
++	writel(val, data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 + portoffset));
++	/* Poll USB2 OP Status */
++	for (count = 0x00; count < V_PCR_USB_OP_MAX_TIMEOUT_COUNT; count++) {
++		val = readl(data->base +
++				(portoffset + R_DAP_USB2_PORT_STATUS_REG_0));
++		val &= V_PCR_USB_OP_STATUS_MASK;
++		/*
++		 * Device:  Poll 0x08 || 0x80 || 0x20
++		 * HOST:    Poll 0x01 || 0x20
++		 * DBC:     Poll 0x40
++		 * Discon:  Poll 0x02 || 0x10
++		 */
++		if ((val == V_PCR_USB_OP_STATUS_HOST) ||
++				(val == V_PCR_USB_OP_STATUS_EXI_BSSB))
++			break;
++	}
++}
++
++void intel_xhci_force_port_xdci(unsigned int  portnum,
++		struct intel_xhci_usb_data *data)
++{
++	unsigned int portoffset;
++	unsigned int count;
++	unsigned int val;
++
++	portoffset = portnum * 0x10; /* Each Port has 0x10 bytes register */
++	/* SDXPCHVBUS Set by CPU xDCI as USB2 connection in PCH is desired */
++	val = readl(data->base + (R_DAP_USB_COMMON_CONTROL_REG));
++	val |= R_DAP_USB_SDXPCHVBUS;
++	writel(val, data->base + (R_DAP_USB_COMMON_CONTROL_REG));
++	/* Initiate disconnect event */
++	val = readl(data->base + (portoffset + R_DAP_USB2_PORT_CONTROL_0_REG_0));
++	val &= (unsigned int)(~V_PCR_USB_CONNECTOR_EVENT_MASK);
++	val |= V_PCR_USB_DISCONNRCT_CONNECTOR_EVENT;
++	writel(val, data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 + portoffset));
++	/* Poll USB2 OP Status */
++	for (count = 0x00; count < V_PCR_USB_OP_MAX_TIMEOUT_COUNT; count++) {
++		val = readl(data->base +
++				(portoffset + R_DAP_USB2_PORT_STATUS_REG_0));
++		val &= V_PCR_USB_OP_STATUS_MASK;
++		/*
++		 * Device:  Poll 0x08 || 0x80 || 0x20
++		 * HOST:    Poll 0x01 || 0x20
++		 * DBC:     Poll 0x40
++		 * Discon:  Poll 0x02 || 0x10
++		 */
++		if (val == V_PCR_USB_OP_STATUS_DISCONNECT)
++			break;
++	}
++	val = readl(data->base + (portoffset +
++				R_DAP_USB2_PORT_CONTROL_0_REG_0));
++	val &= ~(V_PCR_USB_CONNECTOR_EVENT_MASK);
++	val |= V_PCR_USB_CONNECTOR_EVENT_DEVICE;
++	writel(val, data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 +
++				portoffset));
++	/* Poll USB2 OP Status */
++	for (count = 0x00; count < V_PCR_USB_OP_MAX_TIMEOUT_COUNT; count++) {
++		val = readl(data->base +
++				(portoffset + R_DAP_USB2_PORT_STATUS_REG_0));
++		val &= V_PCR_USB_OP_STATUS_MASK;
++		/*
++		 * Device:  Poll 0x08 || 0x80 || 0x20
++		 * HOST:    Poll 0x01 || 0x20
++		 * DBC:     Poll 0x40
++		 * Discon:  Poll 0x02 || 0x10
++		 */
++		if ((val == V_PCR_USB_OP_STATUS_DEVICE) ||
++		(val == V_PCR_USB_OP_STATUS_OV_SUB_DEV) ||
++		(val == V_PCR_USB_OP_STATUS_EXI_BSSB))
++			break;
++	}
++	val = readl(data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 +
++				portoffset));
++	val &= (unsigned int)(~V_PCR_USB_SW_VBUS);
++	val |= V_PCR_USB_SW_VBUS;
++	/* Write VBUS bit */
++	writel(val, data->base + (R_DAP_USB2_PORT_CONTROL_0_REG_0 +
++				portoffset));
++	/* status */
++	val = readl(data->base + (portoffset +
++				R_DAP_USB2_PORT_STATUS_REG_0));
++}
++
+ static int intel_xhci_usb_set_role(struct usb_role_switch *sw,
+ 				   enum usb_role role)
+ {
+@@ -60,7 +260,15 @@ static int intel_xhci_usb_set_role(struct usb_role_switch *sw,
+ 	acpi_status status;
+ 	u32 glk, val;
+ 	u32 drd_config = DRD_CONFIG_DYNAMIC;
+-
++#ifdef USB_DAP_ENABLED
++	if (role == USB_ROLE_HOST)
++		intel_xhci_force_port_xhci(DEVICE_PORT_NUM, data);
++	else if (role == USB_ROLE_DEVICE)
++		intel_xhci_force_port_xdci(DEVICE_PORT_NUM, data);
++	else
++		return -1;
++	return 0;
++#else
+ 	/*
+ 	 * On many CHT devices ACPI event (_AEI) handlers read / modify /
+ 	 * write the cfg0 register, just like we do. Take the ACPI lock
+@@ -126,6 +334,7 @@ static int intel_xhci_usb_set_role(struct usb_role_switch *sw,
+ 
+ 	dev_warn(data->dev, "Timeout waiting for role-switch\n");
+ 	return -ETIMEDOUT;
++#endif
+ }
+ 
+ static enum usb_role intel_xhci_usb_get_role(struct usb_role_switch *sw)
+@@ -134,6 +343,9 @@ static enum usb_role intel_xhci_usb_get_role(struct usb_role_switch *sw)
+ 	enum usb_role role;
+ 	u32 val;
+ 
++#ifdef USB_DAP_ENABLED
++	return intel_xhci_get_dap_port_status(DEVICE_PORT_NUM, data);
++#else
+ 	pm_runtime_get_sync(data->dev);
+ 	val = readl(data->base + DUAL_ROLE_CFG0);
+ 	pm_runtime_put(data->dev);
+@@ -146,6 +358,7 @@ static enum usb_role intel_xhci_usb_get_role(struct usb_role_switch *sw)
+ 		role = USB_ROLE_NONE;
+ 
+ 	return role;
++#endif
+ }
+ 
+ static int intel_xhci_usb_probe(struct platform_device *pdev)
+-- 
+2.25.1
+
