@@ -1,0 +1,52 @@
+From 049a8410d6d4b105188fabb46b297b6d25ef8427 Mon Sep 17 00:00:00 2001
+From: Gowtham Anandha Babu <gowtham.anandha.babu@intel.com>
+Date: Thu, 21 Sep 2023 18:06:30 +0530
+Subject: [PATCH] Add dualbt support in libbt-vendor
+
+From Bluetooth HAL pass "default" string for loading primary
+adapter(hci0), and "ext" string for auxiliary adapter(hci1).
+
+Verified both adapters ON/OFF, scan, connect behaviour.
+
+Tracked-On: OAM-112407
+Signed-off-by: Gowtham Anandha Babu <gowtham.anandha.babu@intel.com>
+---
+ bt_vendor.cc | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/bt_vendor.cc b/bt_vendor.cc
+index 89ba44c..e96718f 100644
+--- a/bt_vendor.cc
++++ b/bt_vendor.cc
+@@ -98,7 +98,12 @@ static int bt_vendor_init(const bt_vendor_callbacks_t* p_cb,
+ 
+   bt_vendor_callbacks = p_cb;
+ 
+-  memcpy(bt_vendor_local_bdaddr, local_bdaddr, sizeof(bt_vendor_local_bdaddr));
++  /* Enable when we have proper adapter address to
++   * pass from bt-stack to distinguish multiple
++   * adapters. Currently bt_vendor_local_bdaddr
++   * is not used anywhere.
++   */
++  //memcpy(bt_vendor_local_bdaddr, local_bdaddr, sizeof(bt_vendor_local_bdaddr));
+ 
+   property_get("bluetooth.interface", prop_value, "0");
+ 
+@@ -109,6 +114,14 @@ static int bt_vendor_init(const bt_vendor_callbacks_t* p_cb,
+     hci_interface = strtol(prop_value + 3, (char **)NULL, 10);
+   if (errno) hci_interface = 0;
+ 
++  //Distinguish between primary and aux adapters
++  ALOGI("Adapter %s", local_bdaddr);
++  if (memcmp(local_bdaddr, "default", 7) == 0) {
++    hci_interface = 0;
++  } else {
++    hci_interface = 1;
++  }
++
+   ALOGI("Using interface hci%d", hci_interface);
+ 
+   property_get("bluetooth.rfkill", prop_value, "0");
+-- 
+2.17.1
+
