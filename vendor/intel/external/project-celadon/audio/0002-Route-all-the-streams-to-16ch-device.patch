@@ -1,0 +1,41 @@
+From 101331937100ee998f0b1d78e95dcf424b3fe380 Mon Sep 17 00:00:00 2001
+From: Deepa K G <g.k.deepa@intel.com>
+Date: Tue, 26 Sep 2023 12:43:11 +0000
+Subject: [PATCH] Route all the streams to 16ch device
+
+Route alarm,navigation and other tones also to 16ch device
+
+Tracked-On: OAM-112410
+Signed-off-by: Deepa K G <g.k.deepa@intel.com>
+---
+ primary/audio_hw.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index a277968..7f363ba 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -467,10 +467,7 @@ pcm_data_t *route_out_pcm(struct stream_out *out,bus_addresses_t bus_to_device)
+                 out->pcm_config->format =  pcm_config_out_hifi.format;
+                 out->pcm_config->period_size = pcm_config_out_hifi.period_size;
+                 out->pcm_config->period_count = pcm_config_out_hifi.period_count;
+-                if (!(strcmp(out->bus_address,"bus0_media_out")))
+-                    out->pcm_config->channels = MAX_OUT_CHANNELS;
+-                else
+-                    out->pcm_config->channels = 2;
++                out->pcm_config->channels = MAX_OUT_CHANNELS;
+             } else {
+                 adev->card = get_pcm_card("avsrt56401");
+                 adev->device  = PCM_DEVICE_AVS;
+@@ -986,7 +983,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+     } else {
+         /* Normal pcm out to primary card */
+         /* In media case adjust 12 channel data to 16 channel and then write*/
+-        if (adev->custom_audio && (!(strcmp(out->bus_address,"bus0_media_out")))) {
++        if (adev->custom_audio) {
+ #ifdef DEBUG_PCM_DUMP
+ 	    if (out_write_dump_before != NULL)
+                 fwrite(out_buffer, 1, out_frames * frame_size, out_write_dump_before);
+-- 
+2.39.2
+
