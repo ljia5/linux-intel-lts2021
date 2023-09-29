@@ -1,5 +1,5 @@
 From 7655e748ea95943911daf06dcd071a60ccf374c2 Mon Sep 17 00:00:00 2001
-From: celadon <celadon@intel.com>
+From: Deepa K G <g.k.deepa@intel.com>
 Date: Wed, 6 Sep 2023 13:21:43 +0000
 Subject: [PATCH] Enable 32bit instead of 24bit in Audio HAL
 
