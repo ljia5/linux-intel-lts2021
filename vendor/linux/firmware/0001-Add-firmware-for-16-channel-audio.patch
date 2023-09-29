@@ -1,5 +1,5 @@
-From 67422e4dc0ad88ec95051526b8c52da98afc79d3 Mon Sep 17 00:00:00 2001
-From: celadon <celadon@intel.com>
+From 1f9ad4bf3b7bea26d3272d2e29d8e9320dd3e28f Mon Sep 17 00:00:00 2001
+From: "Padmashree Mandri" <padmashree.mandri@intel.com>
 Date: Mon, 18 Sep 2023 12:45:02 +0000
 Subject: [PATCH] Add firmware for 16 channel audio
 
@@ -14171,5 +14171,5 @@ zD@Ig-<fw%_);>gb+P&i0L&VYaUn@R-j67+2V@2*0lo=^vcVlOOEC|->Y3_S_V<k8w
 jP?oG%0A4P%N|FE-2LffP#cqHri30opR8(ckHmm*(B}KW0
 
 -- 
-2.39.2
+2.42.0
 
