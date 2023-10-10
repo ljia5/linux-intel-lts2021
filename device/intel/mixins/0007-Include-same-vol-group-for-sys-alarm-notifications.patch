@@ -1,0 +1,143 @@
+From e752211bb9986c1f9153387152d28d40a6b529e4 Mon Sep 17 00:00:00 2001
+From: Deepa K G <g.k.deepa@intel.com>
+Date: Tue, 10 Oct 2023 17:44:16 +0530
+Subject: [PATCH] Include same vol group for sys/alarm/notifications
+
+Include the same volume group for media and other system notifications as
+there are no different pcm devices for routing the sounds.
+
+Tracked-On: OAM-112608
+Signed-off-by: Deepa K G g.k.deepa@intel.com
+---
+ .../policy/audio_policy_configuration.xml     | 53 -------------------
+ .../policy/car_audio_configuration.xml        | 20 +++----
+ 2 files changed, 6 insertions(+), 67 deletions(-)
+
+diff --git a/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml b/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
+index 92055d5..cdad736 100755
+--- a/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
++++ b/groups/audio/AudioCustom/default/policy/audio_policy_configuration.xml
+@@ -56,9 +56,6 @@
+                 <item>bus2_voice_command_out</item>
+                 <item>bus3_call_ring_out</item>
+                 <item>bus4_call_out</item>
+-                <item>bus5_alarm_out</item>
+-                <item>bus6_notification_out</item>
+-                <item>bus7_system_sound_out</item>
+                 <!-- names with _audio_zone_# are used for defined an emulator rear seat audio zone
+                      where each number # is the zone id number -->
+                 <item>bus100_audio_zone_1</item>
+@@ -98,21 +95,6 @@
+                              samplingRates="48000"
+                              channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+                 </mixPort>
+-                <mixPort name="mixport_bus5_alarm_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000"
+-                             channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                </mixPort>
+-                <mixPort name="mixport_bus6_notification_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000"
+-                             channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                </mixPort>
+-                <mixPort name="mixport_bus7_system_sound_out" role="source">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000"
+-                             channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                </mixPort>
+                 <mixPort name="mixport_bus100_audio_zone_1" role="source">
+                     <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+                              samplingRates="48000"
+@@ -195,36 +177,6 @@
+                               defaultValueMB="0" stepValueMB="100"/>
+                     </gains>
+                 </devicePort>
+-                <devicePort tagName="bus5_alarm_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+-                            address="bus5_alarm_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                    <gains>
+-                        <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+-                              minValueMB="-3200" maxValueMB="600"
+-                              defaultValueMB="0" stepValueMB="100"/>
+-                    </gains>
+-                </devicePort>
+-                <devicePort tagName="bus6_notification_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+-                            address="bus6_notification_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                    <gains>
+-                        <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+-                              minValueMB="-3200" maxValueMB="600"
+-                              defaultValueMB="0" stepValueMB="100"/>
+-                    </gains>
+-                </devicePort>
+-                <devicePort tagName="bus7_system_sound_out" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+-                            address="bus7_system_sound_out">
+-                    <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+-                             samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+-                    <gains>
+-                        <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+-                              minValueMB="-3200" maxValueMB="600"
+-                              defaultValueMB="0" stepValueMB="100"/>
+-                    </gains>
+-                </devicePort>
+                 <devicePort tagName="bus100_audio_zone_1" role="sink" type="AUDIO_DEVICE_OUT_BUS"
+                             address="bus100_audio_zone_1">
+                     <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"
+@@ -301,11 +253,6 @@
+                        sources="mixport_bus2_voice_command_out"/>
+                 <route type="mix" sink="bus3_call_ring_out" sources="mixport_bus3_call_ring_out"/>
+                 <route type="mix" sink="bus4_call_out" sources="mixport_bus4_call_out"/>
+-                <route type="mix" sink="bus5_alarm_out" sources="mixport_bus5_alarm_out"/>
+-                <route type="mix" sink="bus6_notification_out"
+-                       sources="mixport_bus6_notification_out"/>
+-                <route type="mix" sink="bus7_system_sound_out"
+-                       sources="mixport_bus7_system_sound_out"/>
+                 <route type="mix" sink="bus100_audio_zone_1" sources="mixport_bus100_audio_zone_1"/>
+                 <route type="mix" sink="bus200_audio_zone_2" sources="mixport_bus200_audio_zone_2"/>
+                 <route type="mix" sink="primary input"
+diff --git a/groups/audio/AudioCustom/default/policy/car_audio_configuration.xml b/groups/audio/AudioCustom/default/policy/car_audio_configuration.xml
+index cf86930..af7a447 100644
+--- a/groups/audio/AudioCustom/default/policy/car_audio_configuration.xml
++++ b/groups/audio/AudioCustom/default/policy/car_audio_configuration.xml
+@@ -28,10 +28,13 @@
+                 <group>
+                     <device address="bus0_media_out">
+                         <context context="music"/>
++                        <context context="alarm"/>
+                         <context context="announcement"/>
+-                    </device>
+-                    <device address="bus6_notification_out">
+                         <context context="notification"/>
++                        <context context="system_sound"/>
++                        <context context="emergency"/>
++                        <context context="safety"/>
++                        <context context="vehicle_status"/>
+                     </device>
+                 </group>
+                 <group>
+@@ -50,18 +53,7 @@
+                         <context context="call_ring"/>
+                     </device>
+                 </group>
+-                <group>
+-                    <device address="bus5_alarm_out">
+-                        <context context="alarm"/>
+-                    </device>
+-                    <device address="bus7_system_sound_out">
+-                        <context context="system_sound"/>
+-                        <context context="emergency"/>
+-                        <context context="safety"/>
+-                        <context context="vehicle_status"/>
+-                    </device>
+-                </group>
+-	        </volumeGroups>
++            </volumeGroups>
+         </zone>
+     </zones>
+ </carAudioConfiguration>
+-- 
+2.17.1
+
