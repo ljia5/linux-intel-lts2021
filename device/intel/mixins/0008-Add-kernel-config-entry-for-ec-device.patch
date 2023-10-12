@@ -1,0 +1,26 @@
+From ea6acb4d5b520ad3d512f31efcafec2c3226ec64 Mon Sep 17 00:00:00 2001
+From: jizhenlo <zhenlong.z.ji@intel.com>
+Date: Tue, 26 Sep 2023 13:51:59 +0800
+Subject: [PATCH] Add kernel config entry for ec device
+
+Tracked-On: OAM-112396
+Signed-off-by: jizhenlo <zhenlong.z.ji@intel.com>
+---
+ .../gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig       | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+index 354e04e..360d2f0 100644
+--- a/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
++++ b/groups/kernel/gmin64/config-lts/linux-intel-lts2021/x86_64_defconfig
+@@ -2026,6 +2026,7 @@ CONFIG_INTEL_MEI_PXP=m
+ # CONFIG_HABANA_AI is not set
+ # CONFIG_UACCE is not set
+ # CONFIG_PVPANIC is not set
++CONFIG_INTEL_EC=y
+ # end of Misc devices
+ 
+ #
+-- 
+2.25.1
+
