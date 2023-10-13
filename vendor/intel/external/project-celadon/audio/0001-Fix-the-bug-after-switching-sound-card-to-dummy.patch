@@ -1,0 +1,28 @@
+From 24a9e6ed1d3c7c7acd3bb6cefbcbe5e3faf24521 Mon Sep 17 00:00:00 2001
+From: "Wan, Xinxin" <xinxin.wan@intel.com>
+Date: Fri, 13 Oct 2023 18:53:19 +0800
+Subject: [PATCH] Fix the bug after switching sound card to dummy
+
+Ensures that the correct sound card can be reloaded
+by resetting the number of write failures to zero.
+
+Signed-off-by: Wan, Xinxin <xinxin.wan@intel.com>
+---
+ primary/audio_hw.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index cd767bb..8a91a69 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -885,6 +885,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+     if (out->standby) {
+         if (!adev->is_hfp_call_active) {
+             ret = start_output_stream(out);
++            adev->fail_count = 0;
+         } else {
+             ret = -1;
+         }
+-- 
+2.25.1
+
