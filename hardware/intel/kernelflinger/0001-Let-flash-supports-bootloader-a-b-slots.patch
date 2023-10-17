@@ -1,0 +1,57 @@
+From 4c1c4e3a9ca2ec537365fb81eb6d7edea14a6f13 Mon Sep 17 00:00:00 2001
+From: jizhenlo <zhenlong.z.ji@intel.com>
+Date: Tue, 17 Oct 2023 10:56:54 +0800
+Subject: [PATCH] Add flash support for bootloader a/b slots
+
+bootloader a/b partitions will be adopted, and the flash should
+support bootloader a/b slots.
+
+Tracked-On: OAM-112897
+Signed-off-by: jizhenlo <zhenlong.z.ji@intel.com>
+---
+ libfastboot/flash.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/libfastboot/flash.c b/libfastboot/flash.c
+index af08bdc..3032928 100644
+--- a/libfastboot/flash.c
++++ b/libfastboot/flash.c
+@@ -485,11 +485,6 @@ static struct label_exception {
+ 	{ L"kernel", flash_kernel },
+ 	{ L"ramdisk", flash_ramdisk },
+ 	{ ESP_LABEL, flash_esp },
+-#ifndef USE_SBL
+-	{ BOOTLOADER_LABEL, flash_bootloader },
+-	{ BOOTLOADER_A_LABEL, flash_bootloader_a },
+-	{ BOOTLOADER_B_LABEL, flash_bootloader_b },
+-#endif
+ #if defined(IOC_USE_SLCAN) || defined(IOC_USE_CBC)
+ 	{ L"ioc", flash_ioc },
+ #endif
+@@ -501,6 +496,7 @@ static struct label_exception {
+ EFI_STATUS flash(VOID *data, UINTN size, CHAR16 *label)
+ {
+ 	UINTN i;
++	CHAR16 *full_label;
+ 
+ #ifndef USER
+ 	/* special case for writing inside esp partition */
+@@ -513,7 +509,14 @@ EFI_STATUS flash(VOID *data, UINTN size, CHAR16 *label)
+ 		if (!StrCmp(LABEL_EXCEPTIONS[i].name, label))
+ 			return LABEL_EXCEPTIONS[i].flash_func(data, size);
+ 
+-	return flash_partition(data, size, label);
++	full_label = (CHAR16 *)slot_label(label);
++
++	if (!full_label) {
++		error(L"invalid bootloader label");
++		return EFI_INVALID_PARAMETER;
++	}
++
++	return flash_partition(data, size, full_label);
+ }
+ 
+ EFI_STATUS flash_file(EFI_HANDLE image, CHAR16 *filename, CHAR16 *label)
+-- 
+2.25.1
+
