@@ -1,0 +1,67 @@
+From abd10f23dcdd268a5a663836e73b58398ad9dac9 Mon Sep 17 00:00:00 2001
+From: "Cui, Yuxin" <yuxin.cui@intel.com>
+Date: Thu, 19 Oct 2023 15:04:44 +0800
+Subject: [PATCH] Change to performance mode as customer's requirement
+
+The customer doesn't want to reduce SoC frequency at high
+temperature, they want to keep the full frequency and use performance
+mode.
+So we change to performance mode, remove the RAPL related passive
+policy which reduces power limit when CPU package temperature is high.
+And we change critical temperature to 103 to let hardware automatically
+reduce the frequency after Tjmax 100 degree Celsius.
+
+Tracked-On: OAM-112786
+Signed-off-by: Cui, Yuxin <yuxin.cui@intel.com>
+---
+ thermal/thermal-daemon/thermal-conf.xml | 34 +++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/thermal/thermal-daemon/thermal-conf.xml b/thermal/thermal-daemon/thermal-conf.xml
+index f588eac..42c4074 100644
+--- a/thermal/thermal-daemon/thermal-conf.xml
++++ b/thermal/thermal-daemon/thermal-conf.xml
+@@ -1,6 +1,40 @@
+ <?xml version="1.0"?>
+ <!-- BEGIN -->
+ <ThermalConfiguration>
++	<Platform>
++		<Name> RPL i5-1350PRE </Name>
++		<ProductName>RPLP LP5 (CPU:RaptorLake)</ProductName>
++		<Preference>PERFORMANCE</Preference>
++		<ThermalZones>
++			<ThermalZone>
++				<Type>cpu_critical</Type>
++				<TripPoints>
++					<TripPoint>
++						<SensorType>x86_pkg_temp</SensorType>
++						<Temperature>103000</Temperature>
++						<Type>Critical</Type>
++					</TripPoint>
++				</TripPoints>
++			</ThermalZone>
++		</ThermalZones>
++	</Platform>
++	<Platform>
++		<Name> ADL IVI RVP </Name>
++		<ProductName>CIA1-PC 2</ProductName>
++		<Preference>PERFORMANCE</Preference>
++		<ThermalZones>
++			<ThermalZone>
++				<Type>cpu_critical</Type>
++				<TripPoints>
++					<TripPoint>
++						<SensorType>x86_pkg_temp</SensorType>
++						<Temperature>103000</Temperature>
++						<Type>Critical</Type>
++					</TripPoint>
++				</TripPoints>
++			</ThermalZone>
++		</ThermalZones>
++	</Platform>
+ 	<Platform>
+ 		<Name> TGL NUC Qi7 </Name>
+ 		<ProductName>NUC11PAQi7</ProductName>
+-- 
+2.34.1
+
