@@ -1,0 +1,439 @@
+From 03d608c6c663aa85b8e1fe3fc06bbd292b4fb0fe Mon Sep 17 00:00:00 2001
+From: "Wan, Xinxin" <xinxin.wan@intel.com>
+Date: Fri, 27 Oct 2023 14:10:45 +0000
+Subject: [PATCH] Fix static analysis issues in audio HAL
+
+Fixes include:
+- Resource leak
+- Double free
+- Explicit null dereferenced
+- Dereference after null check
+- Unintialized pointer read
+- Unused value
+
+Tracked-On: OAM-111894
+Signed-off-by: Wan, Xinxin <xinxin.wan@intel.com>
+---
+ primary/audio_hw.c | 223 +++++++++++++++++++++++++++------------------
+ 1 file changed, 136 insertions(+), 87 deletions(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index df46c3c..fc1e05c 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -607,7 +607,7 @@ static int start_output_stream(struct stream_out *out)
+ static int start_input_stream(struct stream_in *in)
+ {
+     struct audio_device *adev = in->dev;
+-    if (adev != NULL && is_bt_call_active(adev) == 1) {
++    if (adev == NULL || is_bt_call_active(adev) == 1) {
+         ALOGW("%s : bt_call_active, won't allow other outputs", __func__);
+         return -EINVAL;
+     }
+@@ -921,8 +921,11 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+                 ALOGE("%s : Failure to create resampler %d", __func__, ret);
+ 
+                 free(buf_in);
++                buf_in = NULL;
+                 free(buf_out);
++                buf_out = NULL;
+                 free(buf_remapped);
++                buf_remapped = NULL;
+                 goto exit;
+             } else {
+                 ALOGD("%s : voip_out_resampler created rate : [%d -> %d]", __func__, out->pcm_config->rate, bt_out_config.rate);
+@@ -930,12 +933,18 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+         }
+ 
+         if (buf_in == NULL || buf_out == NULL || buf_remapped == NULL) {
+-            if (buf_in != NULL)
++            if (buf_in != NULL) {
+                 free(buf_in);
+-            if (buf_out != NULL)
++                buf_in = NULL;
++            }
++            if (buf_out != NULL) {
+                 free(buf_out);
+-            if (buf_remapped != NULL)
++                buf_out = NULL;
++            }
++            if (buf_remapped != NULL) {
+                 free(buf_remapped);
++                buf_remapped = NULL;
++            }
+             goto exit;
+         }
+ 
+@@ -986,8 +995,11 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+         ret = pcm_write(out->pcm, buf_out, buf_size_out);
+ 
+         free(buf_in);
++        buf_in = NULL;
+         free(buf_out);
++        buf_out = NULL;
+         free(buf_remapped);
++        buf_remapped = NULL;
+ //BT SCO VoIP Call]
+     } else {
+         /* Normal pcm out to primary card */
+@@ -1006,10 +1018,14 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+             int32_t *buf_out = (int32_t *) malloc (buf_size_out);
+             int32_t *buf_in = (int32_t *) malloc (buf_size_in);
+             if (buf_in == NULL || buf_out == NULL) {
+-                if (buf_in == NULL)
+-                    free(buf_out);
+-                if (buf_out == NULL)
++                if (buf_in != NULL) {
+                     free(buf_in);
++                    buf_in = NULL;
++                }
++                if (buf_out != NULL) {
++                    free(buf_out);
++                    buf_out = NULL;
++                }
+                 goto exit;
+             }
+             memset(buf_in, 0, buf_size_in);
+@@ -1025,16 +1041,20 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
+             } else {
+                 ALOGD("%s : out_write_dump was NULL, no dump", __func__);
+             }
++            #endif
+             if (ret == -EPIPE) {
+             /* In case of underrun, don't sleep since we want to catch up asap */
+                 pthread_mutex_unlock(&out->lock);
+                 free(buf_in);
++                buf_in = NULL;
+                 free(buf_out);
++                buf_out = NULL;
+                 return ret;
+             }
+-            #endif
+             free(buf_in);
++            buf_in = NULL;
+             free(buf_out);
++            buf_out = NULL;
+ 
+             if (ret == -1) {
+                 /* For custom audio, if fail with max count, switch to dummy card */
+@@ -1435,8 +1455,11 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+                 ALOGE("%s : Failure to create resampler %d", __func__, ret);
+ 
+                 free(buf_in);
++                buf_in = NULL;
+                 free(buf_out);
++                buf_out = NULL;
+                 free(buf_remapped);
++                buf_remapped = NULL;
+                 goto exit;
+             } else {
+                 ALOGD("%s : voip_in_resampler created rate : [%d -> %d]", __func__, bt_in_config.rate, in->pcm_config->rate);
+@@ -1444,12 +1467,18 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+         }
+ 
+         if (buf_in == NULL || buf_out == NULL || buf_remapped == NULL) {
+-            if (buf_in != NULL)
++            if (buf_in != NULL) {
+                 free(buf_in);
+-            if (buf_out != NULL)
++                buf_in = NULL;
++            }
++            if (buf_out != NULL) {
+                 free(buf_out);
+-            if (buf_remapped != NULL)
++                buf_out = NULL;
++            }
++            if (buf_remapped != NULL) {
+                 free(buf_remapped);
++                buf_remapped = NULL;
++            }
+             goto exit;
+         }
+ 
+@@ -1619,6 +1648,7 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
+     out = (struct stream_out *)calloc(1, sizeof(struct stream_out));
+     if (!out) {
+         free(params);
++        params = NULL;
+         return -ENOMEM;
+     }
+ 
+@@ -1663,7 +1693,9 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
+                 hashmapPut(adev->out_bus_stream_map, out->bus_address, out);
+         } else {
+             free(params);
++            params = NULL;
+             free(out);
++            out = NULL;
+             return -ENOMEM;
+         }
+           /* TODO: read struct audio_gain from audio_policy_configuration */
+@@ -1682,12 +1714,16 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
+     if (out->dev != NULL && is_bt_call_active(out->dev) == 1) {
+         ALOGW("%s : bt_call_active, won't allow other outputs", __func__);
+         free(out);
++        out = NULL;
+         *stream_out = NULL;
++        free(params);
++        params = NULL;
+         return -EBUSY;
+     }
+     *stream_out = &out->stream;
+ 
+     free(params);
++    params = NULL;
+     return 0;
+ }
+ 
+@@ -2058,11 +2094,12 @@ static int prepare_loopback_parameters(struct audio_device *adev)
+     ALOGV("%s", __func__);
+     struct stream_out *out = adev->active_out;
+     //close the stream if is open for ringing or other streams
+-    if (out != NULL) {
+-        if (out->pcm != NULL) {
+-            pcm_close(out->pcm);
+-            adev->active_out = NULL;
+-        }
++    if (out == NULL) {
++        return -ENOMEM;
++    }
++    if (out->pcm != NULL) {
++        pcm_close(out->pcm);
++        adev->active_out = NULL;
+     }
+     adev->sco_thread = 1;
+     adev->primary_thread = 1;
+@@ -2273,26 +2310,12 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+                                        out_config->channels /*channels*/,
+                                        RESAMPLER_QUALITY_DEFAULT, NULL, &resampler);
+         if (ret != 0) {
+-            resampler = NULL;
+             ALOGE("%s : Failure to create upsampler %d", __func__, ret);
+-            free(buf_in);
+-            free(buf_remapped);
+-            free(buf_out_16);
+-            free(buf_in_16);
+             goto resamp_err;
+         }
+ 
+-        if (buf_in_16 == NULL || buf_in == NULL || buf_out_16 == NULL || buf_remapped == NULL) {
+-            if (buf_in_16 != NULL)
+-                free(buf_in_16);
+-            if (buf_in != NULL)
+-                free(buf_in);
+-            if (buf_out_16 != NULL)
+-                free(buf_out_16);
+-            if (buf_remapped != NULL)
+-                free(buf_remapped);
++        if (buf_in_16 == NULL || buf_in == NULL || buf_out_16 == NULL || buf_remapped == NULL)
+             goto exit;
+-        }
+     } else if (!strcmp("bt_to_primary",id) && adev->custom_audio) {/*Buffer allocation and resampler creation for BT IN -> PRIMARY OUT*/
+         //input from BT
+         buf_size_in_16 = in_config->channels * frames_in * sample_size_in_bytes;
+@@ -2316,26 +2339,12 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+                                        in_config->channels/*1bt -> 1 primary channels*/,
+                                        RESAMPLER_QUALITY_DEFAULT, NULL, &resampler);
+         if (ret != 0) {
+-            resampler = NULL;
+             ALOGE("%s : Failure to create upsampler %d", __func__, ret);
+-            free(buf_out_16);
+-            free(buf_in_16);
+-            free(buf_out);
+-            free(buf_out_hifi);
+             goto resamp_err;
+         }
+ 
+-        if (buf_in_16 == NULL || buf_out == NULL || buf_out_hifi == NULL || buf_out_16 == NULL) {
+-            if (buf_in_16 != NULL)
+-                free(buf_in_16);
+-            if (buf_out != NULL)
+-                free(buf_out);
+-            if (buf_out_hifi != NULL)
+-                free(buf_out_hifi);
+-            if (buf_out_16 != NULL)
+-                free(buf_out_16);
++        if (buf_in_16 == NULL || buf_out == NULL || buf_out_hifi == NULL || buf_out_16 == NULL)
+             goto exit;
+-        }
+     } else {
+         buf_size_out = out_config->channels * frames_out * sample_size_in_bytes;
+         buf_size_in = in_config->channels* frames_in * sample_size_in_bytes;
+@@ -2350,25 +2359,12 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+                                        out_config->channels /*channels*/,
+                                        RESAMPLER_QUALITY_DEFAULT, NULL, &resampler);
+             if (ret != 0) {
+-                resampler = NULL;
+                 ALOGE("%s : Failure to create upsampler %d", __func__, ret);
+-                free(buf_out_16);
+-                free(buf_in_16);
+-                free(buf_remapped_16);
+                 goto resamp_err;
+             }
+         }
+-        if (buf_in_16 == NULL || buf_out_16 == NULL || buf_remapped_16 == NULL) {
+-            if (buf_in_16 != NULL)
+-                free(buf_in_16);
+-            if (buf_out_16 != NULL) {
+-                free(buf_out_16);
+-                buf_out_16 = NULL;
+-            }
+-            if (buf_remapped_16 != NULL)
+-                free(buf_remapped_16);
++        if (buf_in_16 == NULL || buf_out_16 == NULL || buf_remapped_16 == NULL)
+             goto exit;
+-        }
+     }
+ 
+     ALOGV("%s : frames_in %zu frames_out %zu direction %s", __func__, frames_in, frames_out, id);
+@@ -2408,6 +2404,8 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+             adjusted_bytes = adjust_channels(buf_in_16, in_config->channels, buf_remapped,
+                                                  out_config->channels, sample_size_in_bytes,
+                                                  buf_size_in_16);
++            ALOGV("%s : remapping [%d -> %d], adjusted bytes : %zu", __func__,
++                    in_config->channels, out_config->channels, adjusted_bytes);
+ #ifdef DEBUG_PCM_DUMP
+             if (loopback_write != NULL)
+                 fwrite(buf_remapped, 1, buf_size_in_16, loopback_write);
+@@ -2429,9 +2427,8 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+             } else {
+                 ALOGV("%s : written %zu to primary_out", __func__, buf_size_out_16);
+             }
+-        }
+ 
+-        if (!strcmp("bt_to_primary",id) && adev->custom_audio) {
++        } else if (!strcmp("bt_to_primary",id) && adev->custom_audio) {
+             // read 16bit data from the BT device
+             read_err = pcm_read(in_proxy, buf_in_16, buf_size_in_16);
+             if (read_err != 0) {
+@@ -2575,6 +2572,8 @@ int looper(struct audio_device *adev, struct pcm_config *in_config, struct pcm_c
+         }
+     }
+ 
++    goto exit;
++
+ exit:
+ #ifdef DEBUG_PCM_DUMP
+     if (loopback_read != NULL)
+@@ -2583,6 +2582,8 @@ exit:
+         fclose(loopback_remapped);
+     if (loopback_write != NULL)
+         fclose(loopback_write);
++    if (loopback_write_13 != NULL)
++        fclose(loopback_write_13);
+ #endif
+ #ifdef FILE_DUMP_DEBUG
+     if (file_write_dump != NULL)
+@@ -2590,36 +2591,84 @@ exit:
+     if (file_read_dump != NULL)
+         fclose(file_read_dump);
+ #endif
+-    if (!strcmp("bt_to_primary",id) && adev->custom_audio) {
+-        if (buf_in_16 != NULL)
+-            free(buf_in_16);
+-        if (buf_out != NULL)
+-            free(buf_out);
+-        if (buf_out_hifi != NULL)
+-            free(buf_out_hifi);
+-        if (buf_out_16 != NULL)
+-            free(buf_out_16);
+-    } else if (!strcmp("primary_to_bt",id) && adev->custom_audio) {
+-        if (buf_in_16 != NULL)
+-            free(buf_in_16);
+-        if (buf_in != NULL)
+-            free(buf_in);
+-        if (buf_out_16 != NULL)
+-            free(buf_out_16);
+-        if (buf_remapped != NULL)
+-            free(buf_remapped);
+-    } else {
+-        if (buf_out_16 != NULL)
+-            free(buf_out_16);
+-        if (buf_in_16 != NULL)
+-            free(buf_in_16);
+-        if (buf_remapped_16 != NULL)
+-            free(buf_remapped_16);
++    if (resampler != NULL) {
++        free(resampler);
++        resampler = NULL;
++     }
++    if (buf_in_16 != NULL) {
++        free(buf_in_16);
++        buf_in_16 = NULL;
++    }
++    if (buf_out != NULL) {
++        free(buf_out);
++        buf_out = NULL;
++    }
++    if (buf_out_hifi != NULL) {
++        free(buf_out_hifi);
++        buf_out_hifi = NULL;
++    }
++    if (buf_out_16 != NULL) {
++        free(buf_out_16);
++        buf_out_16 = NULL;
++    }
++    if (buf_in != NULL) {
++        free(buf_in);
++        buf_in = NULL;
++    }
++    if (buf_remapped != NULL) {
++        free(buf_remapped);
++        buf_remapped = NULL;
++    }
++    if (buf_remapped_16 != NULL) {
++        free(buf_remapped_16);
++        buf_remapped_16 = NULL;
+     }
+     ALOGD("%s --", __func__);
+     return 0;
+ 
+ resamp_err:
++#ifdef DEBUG_PCM_DUMP
++    if (loopback_read != NULL)
++        fclose(loopback_read);
++    if (loopback_remapped != NULL)
++        fclose(loopback_remapped);
++    if (loopback_write != NULL)
++        fclose(loopback_write);
++    if (loopback_write_13 != NULL)
++        fclose(loopback_write_13);
++#endif
++    if (resampler != NULL) {
++        free(resampler);
++        resampler = NULL;
++    }
++    if (buf_in_16 != NULL) {
++        free(buf_in_16);
++        buf_in_16 = NULL;
++    }
++    if (buf_out != NULL) {
++        free(buf_out);
++        buf_out = NULL;
++    }
++    if (buf_out_hifi != NULL) {
++        free(buf_out_hifi);
++        buf_out_hifi = NULL;
++    }
++    if (buf_out_16 != NULL) {
++        free(buf_out_16);
++        buf_out_16 = NULL;
++    }
++    if (buf_remapped != NULL) {
++        free(buf_remapped);
++        buf_remapped = NULL;
++    }
++    if (buf_in != NULL) {
++        free(buf_in);
++        buf_in = NULL;
++    }
++    if (buf_remapped_16 != NULL) {
++        free(buf_remapped_16);
++        buf_remapped_16 = NULL;
++    }
+     return -1;
+ }
+ 
+-- 
+2.34.1
+
