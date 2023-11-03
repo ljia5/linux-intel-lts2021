@@ -1,4 +1,4 @@
-From 91309d2a7927a5fd4c3a20a9e722fe7efafc60be Mon Sep 17 00:00:00 2001
+From 8f75718a470e396068db99445358668ecdf6b0ba Mon Sep 17 00:00:00 2001
 From: shivasku82 <shiva.kumara.rudrappa@intel.com>
 Date: Tue, 19 Sep 2023 14:09:21 +0530
 Subject: [PATCH] camera-ext/ivi: Add camera service and config file
@@ -11,8 +11,8 @@ Signed-off-by: shivasku82 <shiva.kumara.rudrappa@intel.com>
 ---
  groups/camera-ext/ivi/files.spec            |  1 +
  groups/camera-ext/ivi/ivi_camera_config.xml | 82 +++++++++++++++++++++
- groups/camera-ext/ivi/product.mk            |  7 +-
- 3 files changed, 87 insertions(+), 3 deletions(-)
+ groups/camera-ext/ivi/product.mk            |  9 ++-
+ 3 files changed, 88 insertions(+), 4 deletions(-)
  create mode 100644 groups/camera-ext/ivi/ivi_camera_config.xml
 
 diff --git a/groups/camera-ext/ivi/files.spec b/groups/camera-ext/ivi/files.spec
@@ -112,7 +112,7 @@ index 0000000..a474fb2
 +    </MediaCtlConfig>
 +</IVICamera>
 diff --git a/groups/camera-ext/ivi/product.mk b/groups/camera-ext/ivi/product.mk
-index 2beb836..e9ad382 100644
+index 2beb836..35a45fa 100644
 --- a/groups/camera-ext/ivi/product.mk
 +++ b/groups/camera-ext/ivi/product.mk
 @@ -2,12 +2,13 @@
@@ -127,9 +127,10 @@ index 2beb836..e9ad382 100644
  # External camera service
 -PRODUCT_PACKAGES += android.hardware.camera.provider@2.4-external-service \
 -                    android.hardware.camera.provider@2.4-impl
+-
 +PRODUCT_PACKAGES += android.vendor.hardware.camera.provider@2.4-ivi-service \
++		     android.vendor.hardware.camera.provider@2.4-external-service \
 +                    android.hardware.camera.provider@2.4-impl-intel
- 
  
  PRODUCT_PACKAGES += MultiCameraApp
 -- 
