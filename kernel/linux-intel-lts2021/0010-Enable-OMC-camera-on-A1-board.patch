@@ -1,0 +1,116 @@
+From e3c93ed40c583270134f55976f3d6126fa7ed130 Mon Sep 17 00:00:00 2001
+From: Chang Ying <ying.chang@intel.com>
+Date: Fri, 3 Nov 2023 11:38:38 +0800
+Subject: [PATCH] Enable OMC camera on A1 board.
+
+Change I2C adapter form 1 to 3
+Fix bug in suspend/resume flow.In the resume flow driver doesn't
+need to reallocate the GPIO resource. Move the resource allocation
+to the driver init phase.
+
+Tracked-On: OAM-112582
+Tracked-On: OAM-113039
+Signed-off-by: Chang Ying <ying.chang@intel.com>
+---
+ drivers/media/i2c/max96722.c                  | 22 ++++++++++++-------
+ .../media/platform/intel/ipu6-adlrvp-pdata.c  | 17 ++++++++++++--
+ 2 files changed, 29 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/media/i2c/max96722.c b/drivers/media/i2c/max96722.c
+index 0f9a0ca645be..a75298633c7a 100644
+--- a/drivers/media/i2c/max96722.c
++++ b/drivers/media/i2c/max96722.c
+@@ -1062,20 +1062,12 @@ static max96722_register_subdev(struct max96722_priv *priv)
+ 
+ static int max96722_poc_enable(struct max96722_priv *priv, bool enable)
+ {
+-	int ret;
+ 	int i;
+ 
+ 	for (i = 0; i < priv->platform_data->subdev_num; i++) {
+ 		struct max96722_subdev_info *info = &priv->platform_data->subdev_info[i];
+ 
+ 		if (info->power_gpio != -1) {
+-			ret = devm_gpio_request_one(&priv->client->dev,
+-					info->power_gpio, GPIOF_OUT_INIT_LOW, "poc gpio");
+-			if (ret) {
+-				dev_err(&priv->client->dev,
+-						"Failed to request power gpio %d\n", ret);
+-				return ret;
+-			}
+ 			if (enable)
+ 				gpio_set_value(info->power_gpio, 0);
+ 			else
+@@ -1231,6 +1223,7 @@ static int max96722_probe(struct i2c_client *client)
+ {
+ 	struct max96722_priv *priv;
+ 	int ret;
++	int i;
+ 
+ 	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
+ 	if (!priv)
+@@ -1305,6 +1298,19 @@ static int max96722_probe(struct i2c_client *client)
+ 	dev_info(&client->dev, "errb irq %x, lock irq %x\n",
+ 			priv->errb_int, priv->lock_int);
+ 
++	for (i = 0; i < priv->platform_data->subdev_num; i++) {
++		struct max96722_subdev_info *info = &priv->platform_data->subdev_info[i];
++
++		if (info->power_gpio != -1) {
++			ret = devm_gpio_request_one(&client->dev, info->power_gpio,
++					GPIOF_OUT_INIT_LOW, "poc gpio");
++			if (ret) {
++				dev_err(&client->dev, "Failed to request power gpio %d\n", ret);
++				return ret;
++			}
++		}
++	}
++
+ 	mutex_init(&priv->mutex);
+ 
+ 	ret = max96722_init(priv);
+diff --git a/drivers/media/platform/intel/ipu6-adlrvp-pdata.c b/drivers/media/platform/intel/ipu6-adlrvp-pdata.c
+index 77b654e7a715..e02e6b1e358b 100644
+--- a/drivers/media/platform/intel/ipu6-adlrvp-pdata.c
++++ b/drivers/media/platform/intel/ipu6-adlrvp-pdata.c
+@@ -818,7 +818,7 @@ static struct max96722_platform_data max96722_pdata = {
+ 		IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+ };
+ 
+-static struct ipu_isys_subdev_info max96722_sd = {
++static struct ipu_isys_subdev_info max96722_sd_1 = {
+ 	.csi2 = &max96722_csi2_cfg,
+ 	.i2c = {
+ 		.board_info = {
+@@ -829,6 +829,18 @@ static struct ipu_isys_subdev_info max96722_sd = {
+ 		.i2c_adapter_bdf = "0000:00:15.1",
+ 	},
+ };
++
++static struct ipu_isys_subdev_info max96722_sd_2 = {
++	.csi2 = &max96722_csi2_cfg,
++	.i2c = {
++		.board_info = {
++			.type = "max96722",
++			.addr = 0x29,
++			.platform_data = &max96722_pdata,
++		},
++		.i2c_adapter_bdf = "0000:00:19.0",
++	},
++};
+ #endif
+ 
+ static struct ipu_isys_clk_mapping clk_mapping[] = {
+@@ -856,7 +868,8 @@ static struct ipu_isys_subdev_pdata pdata = {
+ 		&d4xx_sd_3,
+ #endif
+ #if IS_ENABLED(CONFIG_VIDEO_MAX96722)
+-		&max96722_sd,
++		&max96722_sd_1,
++		&max96722_sd_2,
+ #endif
+ 		NULL,
+ 	},
+-- 
+2.17.1
+
