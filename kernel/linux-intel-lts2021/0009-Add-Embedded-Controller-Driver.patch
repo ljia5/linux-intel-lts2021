@@ -1,4 +1,4 @@
-From dadd61181e20a8c1ac13bbd919e1b10ef4aeda4e Mon Sep 17 00:00:00 2001
+From 064e7c6ee2a529c161466d78430f58f6e9d88c61 Mon Sep 17 00:00:00 2001
 From: jizhenlo <zhenlong.z.ji@intel.com>
 Date: Tue, 26 Sep 2023 14:17:02 +0800
 Subject: [PATCH] Add Embedded Controller Driver
@@ -17,21 +17,21 @@ Signed-off-by: jizhenlo <zhenlong.z.ji@intel.com>
  create mode 100644 drivers/misc/ec/intel_ec.c
 
 diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
-index 9a77ebf21468..d2baaacd4145 100644
+index d65f2e9fb54c..802734f6a468 100644
 --- a/drivers/misc/Kconfig
 +++ b/drivers/misc/Kconfig
-@@ -515,4 +515,5 @@ source "drivers/misc/habanalabs/Kconfig"
- source "drivers/misc/uacce/Kconfig"
- source "drivers/misc/pvpanic/Kconfig"
+@@ -517,4 +517,5 @@ source "drivers/misc/pvpanic/Kconfig"
  source "drivers/misc/vpumgr/Kconfig"
+ source "drivers/misc/Gpio-asm28xx/Kconfig"
+ source "drivers/misc/gna/Kconfig"
 +source "drivers/misc/ec/Kconfig"
  endmenu
 diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
-index 77c0b4bc45c3..2c4ba4ee343d 100644
+index db18e63b3634..9024c1e8ad1a 100644
 --- a/drivers/misc/Makefile
 +++ b/drivers/misc/Makefile
-@@ -62,3 +62,4 @@ obj-$(CONFIG_HI6421V600_IRQ)	+= hi6421v600-irq.o
- obj-$(CONFIG_VPUMGR)		+= vpumgr/
+@@ -64,3 +64,4 @@ obj-$(CONFIG_HOST_KMB_TJ)       += Gpio-asm28xx/
+ obj-$(CONFIG_INTEL_GNA)		+= gna/
  obj-$(CONFIG_UID_SYS_STATS)	+= uid_sys_stats.o
  obj-$(CONFIG_OPEN_DICE)		+= open-dice.o
 +obj-$(CONFIG_INTEL_EC)		+= ec/
@@ -475,5 +475,5 @@ index 000000000000..b7203705b31e
 +MODULE_DESCRIPTION("Driver for Embedded Controller");
 +
 -- 
-2.25.1
+2.40.0
 
