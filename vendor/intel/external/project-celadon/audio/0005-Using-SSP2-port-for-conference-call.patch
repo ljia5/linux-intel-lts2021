@@ -1,0 +1,34 @@
+From 128da0a247aeadea08eb0c4cfd94a6cb808bff22 Mon Sep 17 00:00:00 2001
+From: "Wan, Xinxin" <xinxin.wan@intel.com>
+Date: Tue, 14 Nov 2023 14:27:10 +0000
+Subject: [PATCH] Using SSP2 port for conference call
+
+Conference call will use SSP2 for playback instead of
+SSP0 as customer requested.
+
+Signed-off-by: Wan, Xinxin <xinxin.wan@intel.com>
+Signed-off-by: Deepa K G g.k.deepa@intel.com
+---
+ primary/audio_hw.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index fc1e05c..793ff10 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -466,7 +466,11 @@ pcm_data_t *route_out_pcm(struct stream_out *out,bus_addresses_t bus_to_device)
+             /*audio zone 0*/
+             if (adev->custom_audio) {
+                 if (adev->fail_count < MAX_FAIL) {
+-                    adev->card = get_pcm_card("ssp0loopback");
++                    if (!strcmp(out->bus_address,"bus4_call_out")) {
++                        adev->card = get_pcm_card("ssp2loopback");
++                    } else {
++                        adev->card = get_pcm_card("ssp0loopback");
++                    }
+                     adev->device  = PCM_DEVICE_AVS;
+                 } else {
+                     adev->card = get_pcm_card("Dummy");
+-- 
+2.34.1
+
