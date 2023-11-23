@@ -1,0 +1,24 @@
+From 07a2d8e24531908024fc0e899ff07bcc64c0e6ed Mon Sep 17 00:00:00 2001
+From: Chang Ying <ying.chang@intel.com>
+Date: Tue, 28 Nov 2023 08:42:56 +0800
+Subject: [PATCH] ipu: load psys driver
+
+IPU S3 cycle needs psys support
+
+Signed-off-by: Chang Ying <ying.chang@intel.com>
+---
+ groups/ipu/true/init.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/groups/ipu/true/init.rc b/groups/ipu/true/init.rc
+index 61c9fc9..58c04f0 100644
+--- a/groups/ipu/true/init.rc
++++ b/groups/ipu/true/init.rc
+@@ -10,3 +10,4 @@ on post-fs
+ 	insmod /vendor/lib/modules/max96717f_dummy.ko
+ 	insmod /vendor/lib/modules/max96722.ko
+     insmod /vendor/lib/modules/intel-ipu6-isys.ko
++    insmod /vendor/lib/modules/intel-ipu6-psys.ko
+-- 
+2.17.1
+
