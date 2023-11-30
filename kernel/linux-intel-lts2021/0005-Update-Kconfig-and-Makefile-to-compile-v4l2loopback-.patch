@@ -1,4 +1,4 @@
-From 8e3d8300362f2185d6e46aa62a94d7152d9275ed Mon Sep 17 00:00:00 2001
+From b13ced1354da973c58f00803c98f1251ed5c22a1 Mon Sep 17 00:00:00 2001
 From: Neo Fang <neo.fang@intel.com>
 Date: Wed, 13 Sep 2023 15:19:19 +0000
 Subject: [PATCH] Update Kconfig and Makefile to compile v4l2loopback driver
@@ -115,5 +115,5 @@ index a6c82f77d0f1..f2d5c0254405 100644
  	curl "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/.clang-format" > $@
  
 -- 
-2.17.1
+2.40.0
 

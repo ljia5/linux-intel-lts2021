@@ -1,4 +1,4 @@
-From e3c93ed40c583270134f55976f3d6126fa7ed130 Mon Sep 17 00:00:00 2001
+From 2a22a944973f96a0eaa3ba31b5c22f98c4f413a6 Mon Sep 17 00:00:00 2001
 From: Chang Ying <ying.chang@intel.com>
 Date: Fri, 3 Nov 2023 11:38:38 +0800
 Subject: [PATCH] Enable OMC camera on A1 board.
@@ -112,5 +112,5 @@ index 77b654e7a715..e02e6b1e358b 100644
  		NULL,
  	},
 -- 
-2.17.1
+2.40.0
 

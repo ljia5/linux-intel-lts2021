@@ -1,4 +1,4 @@
-From 5fd8ad29637317f1f7fddce0a845264f160bc97e Mon Sep 17 00:00:00 2001
+From 6f9014d10f5e3e4c93729d8045f2327d01a4f24d Mon Sep 17 00:00:00 2001
 From: Chang Ying <ying.chang@intel.com>
 Date: Sat, 22 Jul 2023 14:50:15 +0800
 Subject: [PATCH] Add serdes driver for max96722/96717/9295
@@ -2328,5 +2328,5 @@ index 000000000000..8bebe148a77c
 +
 +#endif
 -- 
-2.17.1
+2.40.0
 

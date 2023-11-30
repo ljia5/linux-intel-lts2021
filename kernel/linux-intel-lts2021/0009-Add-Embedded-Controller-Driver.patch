@@ -1,4 +1,4 @@
-From 064e7c6ee2a529c161466d78430f58f6e9d88c61 Mon Sep 17 00:00:00 2001
+From e715f62bbec17be87815e37ea1091e8a794dacd4 Mon Sep 17 00:00:00 2001
 From: jizhenlo <zhenlong.z.ji@intel.com>
 Date: Tue, 26 Sep 2023 14:17:02 +0800
 Subject: [PATCH] Add Embedded Controller Driver

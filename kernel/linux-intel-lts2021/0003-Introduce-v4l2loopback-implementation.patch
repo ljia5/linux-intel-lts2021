@@ -1,4 +1,4 @@
-From d84228e60c743f2bf7c6c6c46d25753a7fda2b8f Mon Sep 17 00:00:00 2001
+From 2529ee4bf59a5ee080009b436bb0433eda40f7eb Mon Sep 17 00:00:00 2001
 From: Neo Fang <neo.fang@intel.com>
 Date: Wed, 13 Sep 2023 14:46:22 +0000
 Subject: [PATCH] Introduce v4l2loopback implementation
@@ -8267,5 +8267,5 @@ index 000000000000..7ba9a017b6cd
 +}
 +restore && restart && configure
 -- 
-2.17.1
+2.40.0
 

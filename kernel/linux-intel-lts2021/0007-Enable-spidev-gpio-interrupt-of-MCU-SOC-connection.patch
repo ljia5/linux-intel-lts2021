@@ -1,4 +1,4 @@
-From bc39054000978eacb04eecb6255a03bdc2f99a3a Mon Sep 17 00:00:00 2001
+From d5f5dae197db04b327ada07a9ad5ccc868af3814 Mon Sep 17 00:00:00 2001
 From: "Zhao, Shirley" <shirley.zhao@intel.com>
 Date: Tue, 12 Sep 2023 14:23:17 +0800
 Subject: [PATCH] Enable spidev/gpio interrupt of MCU/SOC connection
@@ -14,7 +14,7 @@ Signed-off-by: Zhao, Shirley <shirley.zhao@intel.com>
  1 file changed, 96 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/spi/spidev.c b/drivers/spi/spidev.c
-index 1bd73e322b7b..bcc30f20c723 100644
+index 922d778df064..69d39d51e701 100644
 --- a/drivers/spi/spidev.c
 +++ b/drivers/spi/spidev.c
 @@ -22,6 +22,11 @@
@@ -71,7 +71,7 @@ index 1bd73e322b7b..bcc30f20c723 100644
  /*-------------------------------------------------------------------------*/
  
  static ssize_t
-@@ -611,6 +635,22 @@ static int spidev_open(struct inode *inode, struct file *filp)
+@@ -620,6 +644,22 @@ static int spidev_open(struct inode *inode, struct file *filp)
  	return status;
  }
  
@@ -94,7 +94,7 @@ index 1bd73e322b7b..bcc30f20c723 100644
  static int spidev_release(struct inode *inode, struct file *filp)
  {
  	struct spidev_data	*spidev;
-@@ -660,6 +700,7 @@ static const struct file_operations spidev_fops = {
+@@ -669,6 +709,7 @@ static const struct file_operations spidev_fops = {
  	.unlocked_ioctl = spidev_ioctl,
  	.compat_ioctl = spidev_compat_ioctl,
  	.open =		spidev_open,
@@ -102,7 +102,7 @@ index 1bd73e322b7b..bcc30f20c723 100644
  	.release =	spidev_release,
  	.llseek =	no_llseek,
  };
-@@ -706,6 +747,7 @@ MODULE_DEVICE_TABLE(of, spidev_dt_ids);
+@@ -715,6 +756,7 @@ MODULE_DEVICE_TABLE(of, spidev_dt_ids);
  /* Dummy SPI devices not to be used in production systems */
  #define SPIDEV_ACPI_DUMMY	1
  
@@ -110,7 +110,7 @@ index 1bd73e322b7b..bcc30f20c723 100644
  static const struct acpi_device_id spidev_acpi_ids[] = {
  	/*
  	 * The ACPI SPT000* devices are only meant for development and
-@@ -794,11 +836,64 @@ static int spidev_probe(struct spi_device *spi)
+@@ -803,11 +845,64 @@ static int spidev_probe(struct spi_device *spi)
  
  	spidev->speed_hz = spi->max_speed_hz;
  
@@ -177,5 +177,5 @@ index 1bd73e322b7b..bcc30f20c723 100644
  }
  
 -- 
-2.42.0
+2.40.0
 

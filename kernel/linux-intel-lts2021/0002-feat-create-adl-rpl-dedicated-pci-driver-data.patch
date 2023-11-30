@@ -1,4 +1,4 @@
-From 444a2fea43d8a1ab1d6b7ed2c13c125d67782be1 Mon Sep 17 00:00:00 2001
+From bfb95cabd113bb8b737421828b3b927ae8ff4b07 Mon Sep 17 00:00:00 2001
 From: "Martin, Chen" <haochuan.z.chen@intel.com>
 Date: Wed, 6 Sep 2023 06:07:50 -0400
 Subject: [PATCH] feat: create adl & rpl dedicated pci driver data
@@ -74,5 +74,5 @@ index 1d71018f3684..7f9a27c8ea76 100644
  };
  MODULE_DEVICE_TABLE(pci, avs_ids);
 -- 
-2.17.1
+2.40.0
 

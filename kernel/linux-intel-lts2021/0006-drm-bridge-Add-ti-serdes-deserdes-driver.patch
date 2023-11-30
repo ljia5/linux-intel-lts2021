@@ -1,4 +1,4 @@
-From a98aad7eee47407bc45beacb99cb5b4e3aa1701f Mon Sep 17 00:00:00 2001
+From ed6a7e8b5639f5d0cbbaa8662acf8baae337482a Mon Sep 17 00:00:00 2001
 From: kanlihu <kanli.hu@intel.com>
 Date: Fri, 22 Sep 2023 00:54:37 +0800
 Subject: [PATCH] drm/bridge: Add ti serdes/deserdes driver

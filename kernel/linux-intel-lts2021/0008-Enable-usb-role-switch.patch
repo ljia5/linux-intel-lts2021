@@ -1,4 +1,4 @@
-From 516949cf0c8b19079dda448ebe71c5e047a441fd Mon Sep 17 00:00:00 2001
+From 2cbaba651de9f0085f585d5f4a0b4ef0e328b7d0 Mon Sep 17 00:00:00 2001
 From: Balaji M <m.balaji@intel.com>
 Date: Thu, 21 Sep 2023 05:07:05 +0530
 Subject: [PATCH] Enable usb role switch
@@ -57,7 +57,7 @@ index 7a4c2c4ad50e..00000695f89b 100644
  							  NULL);
  		if (ret) {
 diff --git a/drivers/usb/host/xhci-pci.c b/drivers/usb/host/xhci-pci.c
-index fea3b92d6a40..9fe6d66d0208 100644
+index 6467b20af547..5894ecd50042 100644
 --- a/drivers/usb/host/xhci-pci.c
 +++ b/drivers/usb/host/xhci-pci.c
 @@ -61,6 +61,7 @@
@@ -339,5 +339,5 @@ index 5c96e929acea..afaea7d3fb32 100644
  
  static int intel_xhci_usb_probe(struct platform_device *pdev)
 -- 
-2.25.1
+2.40.0
 
