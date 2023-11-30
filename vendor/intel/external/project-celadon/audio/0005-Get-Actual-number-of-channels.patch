@@ -1,0 +1,110 @@
+From decb3d71fa44f7d3c24d5665dfd3cd1db47cb2e7 Mon Sep 17 00:00:00 2001
+From: celadon <celadon@intel.com>
+Date: Thu, 30 Nov 2023 10:21:24 +0000
+Subject: [PATCH] Get Actual number of channels
+
+This patch adds changes to get the actual number of channels of
+currently playing audio track.
+1> Update HAL API version to 3.2 from 3.0
+2> Added dependent API calls
+3> Get track channel data
+
+Tracked-On: OAM-114017
+Signed-off-by: Padmashree Mandri <padmashree.mandri@intel.com>
+---
+ primary/audio_hw.c | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index 793ff10..4a4d47b 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -82,7 +82,6 @@
+ #define NANOS_PER_SECOND       (NANOS_PER_MILLISECOND * MILLIS_PER_SECOND)
+ 
+ #define MAX_FAIL 20
+-
+ #define GET_PCM_CARD_NUMBER(temp_card)  (((temp_card = get_pcm_card("PCH"))!=-1? temp_card:\
+     ((temp_card = get_pcm_card("Intel"))!=-1? temp_card:\
+     (temp_card = get_pcm_card("sofhdadsp")))))
+@@ -168,6 +167,7 @@ struct aec_info {
+     unsigned int available;
+     size_t bytes;
+ };
++
+ //[ BT ALSA Card config
+ struct pcm_config bt_out_config = {
+     .channels = 1,
+@@ -303,6 +303,7 @@ struct stream_out {
+     float amplitude_ratio;             // Protected by this->lock
+     bool is_ducked;                    // Protected by this->lock
+     bool is_muted;                     // Protected by this->lock
++    uint32_t actual_track_channels;
+ };
+ 
+ struct stream_in {
+@@ -844,6 +845,17 @@ static uint32_t out_get_latency(const struct audio_stream_out *stream __unused)
+     }
+     return (pcm_config_out.period_size * pcm_config_out.period_count * 1000) / pcm_config_out.rate;
+ }
++static void out_update_source_metadata_v7(struct audio_stream_out *stream __unused,  const struct source_metadata_v7* source_metadata)
++{
++        struct stream_out *out = (struct stream_out *)stream;
++        if( source_metadata->tracks == NULL)
++            return;
++	//Get channel number from channel mask value
++        out->actual_track_channels = audio_channel_count_from_out_mask(source_metadata->tracks->channel_mask);
++        ALOGI("actual_track_channels %u ", out->actual_track_channels);
++}
++
++static void in_update_sink_metadata_v7(struct audio_stream_in *stream __unused,  const struct sink_metadata_v7* sink_metadata __unused){}
+ 
+ static int out_set_volume(struct audio_stream_out *stream __unused, float left __unused,
+                           float right __unused)
+@@ -1656,6 +1668,7 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
+         return -ENOMEM;
+     }
+ 
++    out->stream.update_source_metadata_v7 = out_update_source_metadata_v7;
+     out->stream.common.get_sample_rate = out_get_sample_rate;
+     out->stream.common.set_sample_rate = out_set_sample_rate;
+     out->stream.common.get_buffer_size = out_get_buffer_size;
+@@ -1863,6 +1876,10 @@ static int adev_set_voice_volume(struct audio_hw_device *dev __unused, float vol
+ 
+     return ret;
+ }
++static int adev_get_audio_port_v7(struct audio_hw_device *dev __unused, struct audio_port_v7 *port __unused)
++{
++	return -ENOSYS;
++}
+ 
+ static int adev_set_master_volume(struct audio_hw_device *dev __unused, float volume __unused)
+ {
+@@ -1982,6 +1999,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
+     }
+ 
+     in->stream.common.get_sample_rate = in_get_sample_rate;
++    in->stream.update_sink_metadata_v7 = in_update_sink_metadata_v7;
+     in->stream.common.set_sample_rate = in_set_sample_rate;
+     in->stream.common.get_buffer_size = in_get_buffer_size;
+     in->stream.common.get_channels = in_get_channels;
+@@ -2921,7 +2939,7 @@ static int adev_open(const hw_module_t* module, const char* name,
+         adev->custom_audio = true;
+ 
+     adev->hw_device.common.tag = HARDWARE_DEVICE_TAG;
+-    adev->hw_device.common.version = AUDIO_DEVICE_API_VERSION_3_0;
++    adev->hw_device.common.version = AUDIO_DEVICE_API_VERSION_3_2;
+     adev->hw_device.common.module = (struct hw_module_t *) module;
+     adev->hw_device.common.close = adev_close;
+     adev->hw_device.init_check = adev_init_check;
+@@ -2946,6 +2964,7 @@ static int adev_open(const hw_module_t* module, const char* name,
+     adev->hw_device.set_audio_port_config = adev_set_audio_port_config;
+     adev->hw_device.create_audio_patch = adev_create_audio_patch;
+     adev->hw_device.release_audio_patch = adev_release_audio_patch;
++    adev->hw_device.get_audio_port_v7 = adev_get_audio_port_v7;
+     snprintf(mixer_path,PATH_MAX,"/vendor/etc/mixer_paths_%d.xml", card);
+     {
+         if (adev->custom_audio)
+-- 
+2.42.0
+
