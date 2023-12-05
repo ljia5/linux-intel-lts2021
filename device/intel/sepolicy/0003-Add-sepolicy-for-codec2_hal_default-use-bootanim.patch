@@ -1,0 +1,26 @@
+From fbc95e3bf295afe3227892ec48115b22b80452ab Mon Sep 17 00:00:00 2001
+From: manxiaoliang <xiaoliangx.man@intel.com>
+Date: Wed, 22 Nov 2023 05:06:28 +0000
+Subject: [PATCH] Add sepolicy for codec2_hal_default use bootanim
+
+Tracked-On: OAM-112973
+Signed-off-by: manxiaoliang <xiaoliangx.man@intel.com>
+---
+ codec2/msdk-codec2/codec2_hal_default.te | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/codec2/msdk-codec2/codec2_hal_default.te b/codec2/msdk-codec2/codec2_hal_default.te
+index bc7b2aa..f60c0a1 100644
+--- a/codec2/msdk-codec2/codec2_hal_default.te
++++ b/codec2/msdk-codec2/codec2_hal_default.te
+@@ -33,6 +33,7 @@ allow codec2_hal_default hal_graphics_composer_default:fd use;
+ allow codec2_hal_default hal_camera:fd use;
+ allow codec2_hal_default bufferhubd:fd use;
+ allow codec2_hal_default { appdomain -isolated_app }:fd use;
++allow codec2_hal_default bootanim:fd use;
+ 
+ allow codec2_hal_default gpu_device:dir r_dir_perms;
+ allow codec2_hal_default gpu_device:chr_file rw_file_perms;
+-- 
+2.17.1
+
