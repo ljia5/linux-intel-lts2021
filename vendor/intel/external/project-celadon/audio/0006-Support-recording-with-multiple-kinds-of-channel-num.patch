@@ -1,0 +1,90 @@
+From 7b732afe7008ccd2e1f3b5774457a52036692c0b Mon Sep 17 00:00:00 2001
+From: "Wan, Xinxin" <xinxin.wan@intel.com>
+Date: Thu, 7 Dec 2023 14:01:03 +0000
+Subject: [PATCH] Support recording with multiple kinds of channel numbers
+
+Support the number of channels from 2 channels to the number required
+by framework. Support for up to 16 channels in audio hal with this change.
+
+Tests done:
+- Verified with PSI recoder: both mono and stereo supported form UI.
+- Verified with Myrecording APP: recording is fine.
+
+Tracked-On: OAM-114174
+Signed-off-by: Wan, Xinxin <xinxin.wan@intel.com>
+---
+ primary/audio_hw.c | 30 ++++++++++++------------------
+ 1 file changed, 12 insertions(+), 18 deletions(-)
+
+diff --git a/primary/audio_hw.c b/primary/audio_hw.c
+index 793ff10..1ca0b95 100644
+--- a/primary/audio_hw.c
++++ b/primary/audio_hw.c
+@@ -153,7 +153,7 @@ struct pcm_config pcm_config_out_hifi = {
+     .start_threshold = (OUT_PERIOD_SIZE_HIFI * OUT_PERIOD_COUNT_HIFI),
+ };
+ struct pcm_config pcm_config_in_hifi = {
+-    .channels = 2,
++    .channels = 16,
+     .rate = IN_SAMPLING_RATE,
+     .period_size = IN_PERIOD_SIZE,
+     .period_count = IN_PERIOD_COUNT,
+@@ -649,11 +649,7 @@ static int start_input_stream(struct stream_in *in)
+     } else {
+         ALOGI("PCM record card selected = %d, \n", adev->cardc);
+         if(adev->custom_audio && adev->fail_count < MAX_FAIL) {
+-            in->pcm_config->format = PCM_FORMAT_S32_LE;
+-            in->pcm_config->channels = MAX_IN_CHANNELS;
+-            in->pcm_config->period_size = IN_PERIOD_SIZE;
+-            in->pcm_config->period_count = IN_PERIOD_COUNT;
+-            in->pcm_config->rate = IN_SAMPLING_RATE;
++            in->pcm_config = &pcm_config_in_hifi;
+     }
+         ALOGV("%s : config : [rate %d format %d channels %d]", __func__,
+             in->pcm_config->rate, in->pcm_config->format, in->pcm_config->channels);
+@@ -1546,6 +1542,7 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+             size_t frames_in = round_to_16_mult(IN_PERIOD_SIZE);
+             size_t buf_size_in_16 = MAX_IN_CHANNELS * frames_in * SAMPLE_SIZE_IN_BYTES_HIFI;
+             int32_t *buf_in_16 = (int32_t *) malloc (buf_size_in_16);
++            int32_t out_channels = audio_channel_count_from_in_mask(in->req_config.channel_mask);
+ 
+             ret = pcm_read(in->pcm, buf_in_16, buf_size_in_16);
+             if (ret < 0) {
+@@ -1557,8 +1554,10 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
+                 pthread_mutex_unlock(&adev->lock);
+             }
+ 
+-            //adjust channel to 2 to framework buffer
+-            adjust_channels(buf_in_16, MAX_IN_CHANNELS, buffer, 2, 
++            //adjust channel to framework buffer according to the channels requsted
++            ALOGD("%s : adjust the number of channels from %d to %d as requested by the framework",
++            __func__, in->pcm_config->channels, out_channels);
++            adjust_channels(buf_in_16, in->pcm_config->channels, buffer, out_channels, 
+                                         SAMPLE_SIZE_IN_BYTES_HIFI, buf_size_in_16);
+             free(buf_in_16);
+         }
+@@ -2995,16 +2994,11 @@ static int adev_open(const hw_module_t* module, const char* name,
+         }
+     }
+     //Update period_size based on sample rate and period_ms
+-    if (adev->custom_audio) {
+-        size_t size = (((size_t)pcm_config_in_hifi.rate) * IN_PERIOD_MS * SAMPLE_SIZE_IN_BYTES_STEREO * 2) / 1000;
+-        pcm_config_in_hifi.period_size = size;
+-        ALOGI("%s : will use input [rate : period] as [%d : %u] for %s variants", __func__, pcm_config_in_hifi.rate, pcm_config_in_hifi.period_size, product);
+-    }
+-    else{
+-        size_t size = (((size_t)pcm_config_in.rate) * IN_PERIOD_MS * SAMPLE_SIZE_IN_BYTES_STEREO) / 1000;
+-        pcm_config_in.period_size = size;
+-        ALOGI("%s : will use input [rate : period] as [%d : %u] for %s variants", __func__, pcm_config_in.rate, pcm_config_in.period_size, product);
+-    }
++    size_t size = (((size_t)pcm_config_in.rate) * IN_PERIOD_MS * SAMPLE_SIZE_IN_BYTES_STEREO) / 1000;
++    pcm_config_in.period_size = size;
++    ALOGI("%s : will use input [rate : period] as [%d : %u] for %s variants",
++    __func__, pcm_config_in.rate, pcm_config_in.period_size, product);
++    
+ 
+ //[BT SCO VoIP Call
+     update_bt_card(adev);
+-- 
+2.34.1
+
