@@ -1,0 +1,27 @@
+From 99507978e36b12755e62effd0e238ed33a83b5d8 Mon Sep 17 00:00:00 2001
+From: Fei Jiang <fei.jiang@intel.com>
+Date: Fri, 8 Dec 2023 18:10:50 +0800
+Subject: [PATCH] i915: Skip one specific resolution for EF1E-A1 panel
+
+Signed-off-by: Fei Jiang <fei.jiang@intel.com>
+---
+ drivers/gpu/drm/drm_modes.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/gpu/drm/drm_modes.c b/drivers/gpu/drm/drm_modes.c
+index fb3a2ad7f25c..e4a16e96982a 100644
+--- a/drivers/gpu/drm/drm_modes.c
++++ b/drivers/gpu/drm/drm_modes.c
+@@ -1329,6 +1329,9 @@ void drm_mode_prune_invalid(struct drm_device *dev,
+ 
+ 	list_for_each_entry_safe(mode, t, mode_list, head) {
+ 		if (mode->status != MODE_OK) {
++			/* Skip one specific resolution for EF1E-A1 panel */
++			if ((mode->hdisplay == 2880) && (mode->vdisplay == 1620))
++				continue;
+ 			list_del(&mode->head);
+ 			if (mode->type & DRM_MODE_TYPE_USERDEF) {
+ 				drm_warn(dev, "User-defined mode not supported: "
+-- 
+2.32.0
+

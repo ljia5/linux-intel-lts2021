@@ -1,0 +1,29 @@
+From 6042e3431060c69bd858fc713753acc41a525b34 Mon Sep 17 00:00:00 2001
+From: Fei Jiang <fei.jiang@intel.com>
+Date: Fri, 8 Dec 2023 06:39:39 +0800
+Subject: [PATCH] add 2880x1620 edid bin to kernel firmware
+
+add 2880x1620 edid to kernel firmware
+make DP-3 load 1080p edid
+
+Signed-off-by: Fei Jiang <fei.jiang@intel.com>
+---
+ edid/2880x1620.bin | Bin 0 -> 128 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 edid/2880x1620.bin
+
+diff --git a/edid/2880x1620.bin b/edid/2880x1620.bin
+new file mode 100644
+index 0000000000000000000000000000000000000000..56a3a7cfcd51739ba59b7399e7710119d3f792d8
+GIT binary patch
+literal 128
+zcmZSh4+abZYgRah2SquH$}=)In95bWdpC7)h|f$l{(uk$1_nknaKFXDU{i=pf`LK@
+z1HXnM1A_!m(SHVGKR<&o3u7(?5CDq&VQ_Kv@lgmhGBLFD2<8Hc{AIB4kqZ`NfGAO5
+G=l}p_2p<6e
+
+literal 0
+HcmV?d00001
+
+-- 
+2.32.0
+
