@@ -1,0 +1,24 @@
+From bf8e6172edca39cc63b80c124f22fb2194617a85 Mon Sep 17 00:00:00 2001
+From: shivasku82 <shiva.kumara.rudrappa@intel.com>
+Date: Thu, 7 Dec 2023 12:49:45 +0530
+Subject: [PATCH] enable error logging in camera config
+
+---
+ groups/camera-ext/ivi/ivi_camera_config.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/groups/camera-ext/ivi/ivi_camera_config.xml b/groups/camera-ext/ivi/ivi_camera_config.xml
+index a474fb2..4d4b06b 100644
+--- a/groups/camera-ext/ivi/ivi_camera_config.xml
++++ b/groups/camera-ext/ivi/ivi_camera_config.xml
+@@ -27,6 +27,7 @@
+             <VirtId>11</VirtId>
+             <VirtId>12</VirtId>
+         </Bind>
++        <Subdev>/dev/v4l-subdev4</Subdev>
+     </Device>
+     <!--
+     <Device>
+-- 
+2.17.1
+
