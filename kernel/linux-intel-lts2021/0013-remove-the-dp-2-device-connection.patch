@@ -1,0 +1,42 @@
+From 1ad3daa13929b19bd2f9cc9f58d05e8964e74120 Mon Sep 17 00:00:00 2001
+From: "Jia, Lin A" <lin.a.jia@intel.com>
+Date: Wed, 13 Dec 2023 21:37:20 +0000
+Subject: [PATCH] remove the dp-2 device connection
+
+Test-done:
+    Android boot and navigation tested with panel EF1E-A1
+
+Tracked-On: OAM-114177
+Signed-off-by: Lin Jia <lin.a.jia@intel.com>
+---
+ drivers/gpu/drm/bridge/ti/fpd_dp_ser_drv.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/ti/fpd_dp_ser_drv.c b/drivers/gpu/drm/bridge/ti/fpd_dp_ser_drv.c
+index 69e04e2a2fd6..282f8e0bd165 100644
+--- a/drivers/gpu/drm/bridge/ti/fpd_dp_ser_drv.c
++++ b/drivers/gpu/drm/bridge/ti/fpd_dp_ser_drv.c
+@@ -1369,7 +1369,6 @@ static struct platform_driver fpd_dp_ser_driver = {
+ };
+ 
+ #define PAD_CFG_DW0_GPPC_A_16              0xfd6e0AA0
+-#define PAD_CFG_DW0_GPPC_B_03              0xfd6e0730
+ 
+ int __init fpd_dp_ser_module_init(void)
+ {
+@@ -1381,12 +1380,6 @@ int __init fpd_dp_ser_module_init(void)
+ 	pdev = platform_device_register_simple(DEV_NAME, -1, NULL, 0);
+ 	pr_debug("[FPD_DP] [-%s-%s-%d-]\n", __FILE__, __func__, __LINE__);
+ 
+-	gpio_cfg = (unsigned char *)ioremap(PAD_CFG_DW0_GPPC_B_03, 0x1);
+-        data = ioread8(gpio_cfg);
+-        data = data | 1;
+-        iowrite8(data, gpio_cfg);
+-        iounmap(gpio_cfg);
+-
+         gpio_cfg = (unsigned char *)ioremap(PAD_CFG_DW0_GPPC_A_16, 0x1);
+         data = ioread8(gpio_cfg);
+         data = data | 1;
+-- 
+2.34.1
+
