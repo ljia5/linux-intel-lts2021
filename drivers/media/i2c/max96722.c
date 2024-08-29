@@ -1007,7 +1007,7 @@ static const struct v4l2_ctrl_config max96722_controls[] = {
 	},
 };
 
-static max96722_register_subdev(struct max96722_priv *priv)
+static int max96722_register_subdev(struct max96722_priv *priv)
 {
 	int ret;
 	int i;
