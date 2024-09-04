@@ -960,7 +960,7 @@ int intel_backlight_device_register(struct intel_connector *connector)
 
 	WARN_ON(panel->backlight.max == 0);
 
-	if (strcmp(connector->base.name ,"DP-3") != 0) {
+	/*if (strcmp(connector->base.name ,"DP-3") != 0) */{
 		if (!acpi_video_backlight_use_native()) {
 			drm_info(&i915->drm, "Skipping intel_backlight registration\n");
 			return 0;
@@ -1797,10 +1797,10 @@ void intel_backlight_init_funcs(struct intel_panel *panel)
 		if (!intel_has_quirk(dev_priv, QUIRK_NO_PPS_BACKLIGHT_POWER_HOOK))
 			connector->panel.backlight.power = intel_pps_backlight_power;
 	}
-
+#if 0
 	if (intel_dp_mcu_init_backlight_funcs(connector) == 0)
 		return;
-
+#endif
 	/* We're using a standard PWM backlight interface */
 	panel->backlight.funcs = &pwm_bl_funcs;
 }

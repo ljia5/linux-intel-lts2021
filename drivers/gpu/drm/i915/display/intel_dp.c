@@ -5494,7 +5494,7 @@ void intel_dp_mst_resume(struct drm_i915_private *dev_priv)
 		}
 	}
 }
-
+#if 0
 extern struct i2c_adapter *i2c_adap_mcu;
 
 char intel_dp_ser_mcu_read_reg(struct drm_device *dev, struct i2c_adapter *adapter, u8 reg_addr, u8 *val)
@@ -5557,8 +5557,6 @@ bool intel_dp_mcu_write_reg(struct drm_device *dev, struct i2c_adapter *adapter,
 	drm_dbg_kms(dev, "[FPD_DP] WIB buf[0] 0x%02x OK\n",
 			buf[0]);
 	drm_dbg_kms(dev, "[FPD_DP] WIB buf[1] 0x%02x OK\n",
-			buf[1]);
-	drm_dbg_kms(dev, "[FPD_DP] WIB buf[2] 0x%02x OK\n",
 			buf[2]);
 	drm_dbg_kms(dev, "[FPD_DP] WIB buf[3] 0x%02x OK\n",
 			buf[3]);
@@ -5648,3 +5646,4 @@ int intel_dp_mcu_init_backlight_funcs(struct intel_connector *intel_connector)
 
 	return 0;
 }
+#endif
